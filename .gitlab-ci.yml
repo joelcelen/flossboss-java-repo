@@ -21,3 +21,10 @@ trigger_notification:
   rules:
     - changes:
         - notification-service/**/*
+trigger_dentist:
+  stage: triggers
+  trigger:
+    include: dentist-service/.gitlab-ci.yml
+  rules:
+    - changes:
+        - dentist-service/**/*
