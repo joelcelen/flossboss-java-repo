@@ -1,0 +1,23 @@
+stages:
+  - triggers
+trigger_appointment:
+  stage: triggers
+  trigger:
+    include: appointment-service/.gitlab-ci.yml
+  rules:
+    - changes:
+        - appointment-service/**/*
+trigger_logging:
+  stage: triggers
+  trigger:
+    include: logging-service/.gitlab-ci.yml
+  rules:
+    - changes:
+        - logging-service/**/*
+trigger_notification:
+  stage: triggers
+  trigger:
+    include: notification-service/.gitlab-ci.yml
+  rules:
+    - changes:
+        - notification-service/**/*
