@@ -12,3 +12,6 @@ buildNumber.properties
 
 # Ignore configuration files with sensitive information
 /src/main/resources/application.properties
+
+# Ignore mqtt configuration
+/DentistTool/src/main/resources/hiveconfig.txt
