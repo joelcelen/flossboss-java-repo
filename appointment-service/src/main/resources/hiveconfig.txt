@@ -1,4 +1,0 @@
-AppointmentService
-ssl://67bca923f4b0428a865579e43f400549.s2.eu.hivemq.cloud:8883
-flossbossgu
-Kuggen2023
