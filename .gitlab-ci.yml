@@ -8,6 +8,7 @@ trigger_appointment:
     - changes:
         - appointment-service/**/*
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_BRANCH
 trigger_logging:
   stage: triggers
   trigger:
@@ -16,6 +17,7 @@ trigger_logging:
     - changes:
         - logging-service/**/*
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_BRANCH
 trigger_notification:
   stage: triggers
   trigger:
@@ -24,6 +26,7 @@ trigger_notification:
     - changes:
         - notification-service/**/*
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_BRANCH
 trigger_dentist:
   stage: triggers
   trigger:
@@ -32,3 +35,4 @@ trigger_dentist:
     - changes:
         - dentist-service/**/*
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_BRANCH
