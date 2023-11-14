@@ -2,15 +2,14 @@ import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-
-import java.sql.Time;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.TreeMap;
 
 public class DentistUI {
 
-    private static final Map<String, TimeSlot> timeSlots = new TreeMap<>();   // Use treemap to store the time slots in order
+    // Use treemap to store the time slots in order
+    private static final Map<String, TimeSlot> timeSlots = new TreeMap<>();
 
     public static void main(String[] args) throws MqttException {
 
@@ -20,7 +19,7 @@ public class DentistUI {
             System.out.println("Failed to configure MQTT client");
             return;
         }
-
+        // Initialize the timeSlots map and MQTT callback
         initializeTimeSlots();
         mqttCallback(clientMqtt);
 
@@ -50,15 +49,14 @@ public class DentistUI {
                 }
             }
         }
-
-
-
+        scanner.close();
     }   // main loop end
 
-    /**
+    /***********************************************
      * Place all methods below this line
      * Do not place methods directly in the main
      */
+
     // Initialize time slots. Time is the key. Each key maps to the TimeSlot object that has two fields (booking status)
     private static void initializeTimeSlots() {
         String[] slots = {"08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"};
@@ -73,7 +71,6 @@ public class DentistUI {
             timeSlot.setStatus(newStatus);
         }
     }
-
 
     // Loop through all timeslots, only print the timeslot if it marked as available.
     private static void displayTimeSlots() {
@@ -130,7 +127,4 @@ public class DentistUI {
             throw new RuntimeException(exception);
         }
     }
-
-
-
 }
