@@ -7,8 +7,7 @@ trigger_appointment:
   rules:
     - changes:
         - appointment-service/**/*
-    - exists:
-        - $CI_MERGE_REQUEST_ID
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
 trigger_logging:
   stage: triggers
   trigger:
@@ -16,8 +15,7 @@ trigger_logging:
   rules:
     - changes:
         - logging-service/**/*
-    - exists:
-        - $CI_MERGE_REQUEST_ID
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
 trigger_notification:
   stage: triggers
   trigger:
@@ -25,8 +23,7 @@ trigger_notification:
   rules:
     - changes:
         - notification-service/**/*
-    - exists:
-        - $CI_MERGE_REQUEST_ID
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
 trigger_dentist:
   stage: triggers
   trigger:
@@ -34,5 +31,4 @@ trigger_dentist:
   rules:
     - changes:
         - dentist-service/**/*
-    - exists:
-        - $CI_MERGE_REQUEST_ID
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
