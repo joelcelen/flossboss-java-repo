@@ -5,34 +5,26 @@ trigger_appointment:
   trigger:
     include: appointment-service/.gitlab-ci.yml
   rules:
-    - changes:
-        - appointment-service/**/*
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_COMMIT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "push"
 trigger_logging:
   stage: triggers
   trigger:
     include: logging-service/.gitlab-ci.yml
   rules:
-    - changes:
-        - logging-service/**/*
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_COMMIT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "push"
 trigger_notification:
   stage: triggers
   trigger:
     include: notification-service/.gitlab-ci.yml
   rules:
-    - changes:
-        - notification-service/**/*
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_COMMIT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "push"
 trigger_dentist:
   stage: triggers
   trigger:
     include: dentist-service/.gitlab-ci.yml
   rules:
-    - changes:
-        - dentist-service/**/*
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_COMMIT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "push"
