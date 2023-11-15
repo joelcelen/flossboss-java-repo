@@ -11,5 +11,5 @@ buildNumber.properties
 .mvn/wrapper/maven-wrapper.jar
 
 # Ignore configuration files with sensitive information
-/src/main/resources/atlasconfig.txt
-/src/main/resources/hiveconfig.txt
+**/src/main/resources/atlasconfig.txt
+**/src/main/resources/hiveconfig.txt
