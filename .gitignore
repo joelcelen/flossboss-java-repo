@@ -13,3 +13,6 @@ buildNumber.properties
 # Ignore configuration files with sensitive information
 **/src/main/resources/atlasconfig.txt
 **/src/main/resources/hiveconfig.txt
+
+# MacOS
+**/.DS_Store
