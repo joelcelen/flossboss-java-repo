@@ -1,3 +1,7 @@
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
+
 variables:
   MAVEN_OPTS: -Dmaven.repo.local=.m2/repository
 
