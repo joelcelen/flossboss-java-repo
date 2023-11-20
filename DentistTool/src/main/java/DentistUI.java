@@ -8,10 +8,9 @@ import java.util.TreeMap;
 
 public class DentistUI {
 
-    // test
-
     // Use treemap to store the time slots in order
-    private static final Map<String, TimeSlot> timeSlots = new TreeMap<>();
+    private static final Map<String, TimeSlot> timeSlots = new TreeMap<>(); // Map to store time slots
+    private static Scanner scanner; // Scanner object to read user input
 
     public static void main(String[] args) throws MqttException {
 
@@ -21,18 +20,47 @@ public class DentistUI {
             System.out.println("Failed to configure MQTT client");
             return;
         }
+
         // Initialize the timeSlots map and MQTT callback
         initializeTimeSlots();
         mqttCallback(clientMqtt);
 
-        // TIME SLOT MENU
-
-        Scanner scanner = new Scanner(System.in);
-        boolean running = true;
+        // Create a scanner to read user input and a variable for the menu options.
+        scanner = new Scanner(System.in);
         char option;
 
+        /*******************************
+         *  Authenticate dentist loop
+         ******************************/
+
+        boolean authenticated = false;
+
+        while (!authenticated ) {
+            System.out.println("\n\n\n--- DENTIST USER INTERFACE ---\n");
+            System.out.println("Select an option from the menu below:\n");
+            System.out.println("1. LOGIN");
+            System.out.println("2. Dont have an account? REGISTER");
+            System.out.println("X. Exit\n");
+            option = scanner.next().charAt(0);
+            scanner.nextLine();
+
+            switch (option) {
+                case '1' -> loginDentist();
+                case '2' -> registerDentist();
+                case 'X' | 'x' -> {
+                    System.exit(0);
+                }
+            }
+        }
+
+        /*********************************
+         *          MAIN UI LOOP
+         ********************************/
+
+        boolean running = true;
+
         while (running) {
-            System.out.println("\n--- DENTIST USER INTERFACE ---\n");
+            System.out.println("\n\n\n--- DENTIST USER INTERFACE ---\n");
             System.out.println("Select an option from the menu below: \n");
             System.out.println("1: View Schedule");
             System.out.println("2. Add time slots to schedule");
@@ -52,14 +80,16 @@ public class DentistUI {
             }
         }
         scanner.close();
-    }   // main loop end
+    }   // MAIN METHOD ENDS HERE
 
-    /***********************************************
-     * Place all methods below this line
-     * Do not place methods directly in the main
-     */
+    /**********************************************************
+     * PLACE ALL METHODS BELOW THIS LINE!!!
+     * DO NOT place method implementation directly in the main!
+     * Only call methods in main
+     ***********************************************************/
 
-    // Initialize time slots. Time is the key. Each key maps to the TimeSlot object that has two fields (booking status)
+    // Initialize timeslots map. Time is the key.
+    // Each key maps to the TimeSlot object that has two fields (booking status and dentist availability)
     private static void initializeTimeSlots() {
         String[] slots = {"08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"};
         for (String slot: slots) {
@@ -67,6 +97,8 @@ public class DentistUI {
         }
     }
 
+    // Update time slot appointment status.
+    // Use in the MQTT callback method mqttCallback()
     private static void updateTimeSlot(String timeSlotKey, String newStatus) {
         TimeSlot timeSlot = timeSlots.get(timeSlotKey);
         if (timeSlot != null && (timeSlot.getAvailable() == true)) {
@@ -74,7 +106,8 @@ public class DentistUI {
         }
     }
 
-    // Loop through all timeslots, only print the timeslot if it marked as available.
+    // Display timeslots
+    // Loop through all timeslots, only print a timeslot if it is marked as available.
     private static void displayTimeSlots() {
         System.out.println("\nMY SCHEDULE:\n");
         for (Map.Entry<String, TimeSlot> entry : timeSlots.entrySet()) {
@@ -85,8 +118,11 @@ public class DentistUI {
         }
     }
 
+    // Option 2 in MAIN UI LOOP
+    // Prompt dentist to enter their available time slots.
+    // Separate slots by commas and put them in an array (addedSlots)
+    // Loop through addedSlots, if the time slot exists in the timeSlots map, mark it as available and publish to mqtt.
     private static void addTimeSlots(ClientMqtt clientMqtt) throws MqttException {
-        Scanner scanner = new Scanner(System.in);
         System.out.println("\nEnter time slots to mark as available (HH:MM), separate by commas (e.g., 08:00,09:00)\n");
         String input = scanner.nextLine();
         String[] addedSlots = input.split(",");
@@ -103,6 +139,8 @@ public class DentistUI {
         displayTimeSlots();
     }
 
+
+    // Handle MQTT messages
     private static void mqttCallback(ClientMqtt clientMqtt) {
         try {
             clientMqtt.subscribe("flossboss/timeSlots");
@@ -129,4 +167,46 @@ public class DentistUI {
             throw new RuntimeException(exception);
         }
     }
-}
+
+    private static void loginDentist() {
+        String username;
+        String password;
+        String clinicID;
+        System.out.println("\n--- LOGIN ---\n");
+        System.out.print("Enter email: ");
+        username = scanner.nextLine();
+        System.out.print("\nEnter password: ");
+        password = scanner.nextLine();
+        System.out.print("\nEnter clinic-ID: ");
+        clinicID = scanner.nextLine();
+
+        //TODO
+        // ADD TRY CATCH BLOCK HERE
+        // TRY to publish username, password and clinic-id to MQTT
+        // Either use QOS for confirmation and subscribe to topic that confirms authentication
+        // Update "authenticated" variable
+        // CATCH error
+
+    }
+
+    private static void registerDentist() {
+        String username;
+        String password;
+        String clinicID;
+        System.out.println("\n--- REGISTER ACCOUNT ---\n");
+        System.out.print("Enter preferred username: ");
+        username = scanner.nextLine();
+        System.out.print("\nEnter preferred password: ");
+        password = scanner.nextLine();
+        System.out.println("\nEnter clinic-ID");
+        clinicID = scanner.nextLine();
+
+        //TODO
+        // ADD TRY CATCH BLOCK HERE
+        // TRY to publish username, password and clinic-id to MQTT
+        // USE QOS to for confirmation and subscribe to a topic that confirms created account
+        // Update "authenticated" variable
+        // CATCH error
+    }
+
+}   // CLASS BRACKET
