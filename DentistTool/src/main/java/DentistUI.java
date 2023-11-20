@@ -8,6 +8,8 @@ import java.util.TreeMap;
 
 public class DentistUI {
 
+    // test
+
     // Use treemap to store the time slots in order
     private static final Map<String, TimeSlot> timeSlots = new TreeMap<>();
 
