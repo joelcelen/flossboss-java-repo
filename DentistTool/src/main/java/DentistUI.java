@@ -5,14 +5,18 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.TreeMap;
+import org.json.JSONObject;
 
 public class DentistUI {
 
-    // Use treemap to store the time slots in order
-    private static final Map<String, TimeSlot> timeSlots = new TreeMap<>(); // Map to store time slots
+    private static final Map<String, TimeSlot> timeSlots = new TreeMap<>(); // Map to store time slots, treemap stores time slots in order
     private static Scanner scanner; // Scanner object to read user input
+    private static String name; // Dentist name, specified in registerDentist(), printed in menu
 
-    public static void main(String[] args) throws MqttException {
+    public static void main(String[] args) {
+
+        scanner = new Scanner(System.in);   // Create a scanner to read user input
+        char option;    // Variable for the menu options
 
         // Instantiate mqtt client
         ClientMqtt clientMqtt = ClientMqtt.configMqttClient();
@@ -20,14 +24,8 @@ public class DentistUI {
             System.out.println("Failed to configure MQTT client");
             return;
         }
-
-        // Initialize the timeSlots map and MQTT callback
-        initializeTimeSlots();
-        mqttCallback(clientMqtt);
-
-        // Create a scanner to read user input and a variable for the menu options.
-        scanner = new Scanner(System.in);
-        char option;
+        initializeTimeSlots();  // Initialize the timeSlots map and MQTT callback
+        mqttCallback(clientMqtt);   // Initialize MQTT callback
 
         /*******************************
          *  Authenticate dentist loop
@@ -45,11 +43,13 @@ public class DentistUI {
             scanner.nextLine();
 
             switch (option) {
-                case '1' -> loginDentist();
-                case '2' -> registerDentist();
-                case 'X' | 'x' -> {
-                    System.exit(0);
+                case '1' -> {
+                    try { loginDentist(clientMqtt); } catch (MqttException e) { throw new RuntimeException(e); }
                 }
+                case '2' -> {
+                    try { registerDentist(clientMqtt); } catch (MqttException e) { throw new RuntimeException(e); }
+                }
+                case 'X' | 'x' -> System.exit(0);
             }
         }
 
@@ -61,6 +61,7 @@ public class DentistUI {
 
         while (running) {
             System.out.println("\n\n\n--- DENTIST USER INTERFACE ---\n");
+            System.out.println("--- "+name+" ---");
             System.out.println("Select an option from the menu below: \n");
             System.out.println("1: View Schedule");
             System.out.println("2. Add time slots to schedule");
@@ -71,7 +72,13 @@ public class DentistUI {
 
             switch (option) {
                 case '1' -> displayTimeSlots();
-                case '2' -> addTimeSlots(clientMqtt);
+                case '2' -> {
+                    try {
+                        addTimeSlots(clientMqtt);
+                    } catch (MqttException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
                 case '3' -> System.out.println("To be implemented");
                 case 'X' | 'x' -> {
                     running = false;
@@ -82,7 +89,8 @@ public class DentistUI {
         scanner.close();
     }   // MAIN METHOD ENDS HERE
 
-    /**********************************************************
+
+    /************************************************************
      * PLACE ALL METHODS BELOW THIS LINE!!!
      * DO NOT place method implementation directly in the main!
      * Only call methods in main
@@ -168,45 +176,63 @@ public class DentistUI {
         }
     }
 
-    private static void loginDentist() {
-        String username;
+    private static void loginDentist(ClientMqtt clientMqtt) throws MqttException {
+
+        final String LOGIN_REQUEST_TOPIC = "flossboss/dentist/login/request";
+        String email;
         String password;
-        String clinicID;
+        String clinicId;
+
         System.out.println("\n--- LOGIN ---\n");
         System.out.print("Enter email: ");
-        username = scanner.nextLine();
-        System.out.print("\nEnter password: ");
+        email = scanner.nextLine();
+        System.out.print("Enter password: ");
         password = scanner.nextLine();
-        System.out.print("\nEnter clinic-ID: ");
-        clinicID = scanner.nextLine();
+        System.out.print("Enter clinic-ID: ");
+        clinicId = scanner.nextLine();
+
+        JSONObject jsonDentist = new JSONObject();
+        jsonDentist.put("email", email);
+        jsonDentist.put("password", password);
+        jsonDentist.put("clinicId", clinicId);
+        String payload = jsonDentist.toString();
+        clientMqtt.publish(LOGIN_REQUEST_TOPIC, payload);
 
         //TODO
-        // ADD TRY CATCH BLOCK HERE
-        // TRY to publish username, password and clinic-id to MQTT
-        // Either use QOS for confirmation and subscribe to topic that confirms authentication
+        // USE QOS for confirmation and subscribe to topic that confirms authentication
         // Update "authenticated" variable
-        // CATCH error
 
     }
 
-    private static void registerDentist() {
-        String username;
+    private static void registerDentist(ClientMqtt clientMqtt) throws MqttException {
+
+        final String REGISTER_REQUEST_TOPIC = "flossboss/dentist/register/request";
+        String email;
         String password;
-        String clinicID;
+        String clinicId;
+
         System.out.println("\n--- REGISTER ACCOUNT ---\n");
-        System.out.print("Enter preferred username: ");
-        username = scanner.nextLine();
-        System.out.print("\nEnter preferred password: ");
+        System.out.print("Enter full name: ");
+        name = scanner.nextLine();
+        System.out.print("Enter preferred email: ");
+        email = scanner.nextLine();
+        System.out.print("Enter preferred password: ");
         password = scanner.nextLine();
-        System.out.println("\nEnter clinic-ID");
-        clinicID = scanner.nextLine();
+        System.out.print("Enter clinic-ID: ");
+        clinicId = scanner.nextLine();
+
+        JSONObject jsonDentist = new JSONObject();
+        jsonDentist.put("fullName", name);
+        jsonDentist.put("email", email);
+        jsonDentist.put("password", password);
+        jsonDentist.put("clinicId", clinicId);
+        String payload = jsonDentist.toString();
+        clientMqtt.publish(REGISTER_REQUEST_TOPIC, payload);
 
         //TODO
-        // ADD TRY CATCH BLOCK HERE
-        // TRY to publish username, password and clinic-id to MQTT
         // USE QOS to for confirmation and subscribe to a topic that confirms created account
         // Update "authenticated" variable
-        // CATCH error
+
     }
 
-}   // CLASS BRACKET
+}   // CLASS CLOSING BRACKET
