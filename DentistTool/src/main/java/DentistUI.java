@@ -12,6 +12,7 @@ public class DentistUI {
     private static final Map<String, TimeSlot> timeSlots = new TreeMap<>(); // Map to store time slots, treemap stores time slots in order
     private static Scanner scanner; // Scanner object to read user input
     private static String name; // Dentist name, specified in registerDentist(), printed in menu
+    private static boolean authenticated = false;   // condition to run authenticated loop, updated in mqttCallback()
 
     public static void main(String[] args) {
 
@@ -31,8 +32,6 @@ public class DentistUI {
          *  Authenticate dentist loop
          ******************************/
 
-        boolean authenticated = false;
-
         while (!authenticated ) {
             System.out.println("\n\n\n--- DENTIST USER INTERFACE ---\n");
             System.out.println("Select an option from the menu below:\n");
@@ -44,10 +43,24 @@ public class DentistUI {
 
             switch (option) {
                 case '1' -> {
-                    try { loginDentist(clientMqtt); } catch (MqttException e) { throw new RuntimeException(e); }
+                    try {
+                        loginDentist(clientMqtt);
+                        Thread.sleep(5000); // Pause thread while waiting for confirmation from broker.
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    } catch (MqttException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
                 case '2' -> {
-                    try { registerDentist(clientMqtt); } catch (MqttException e) { throw new RuntimeException(e); }
+                    try {
+                        registerDentist(clientMqtt);
+                        Thread.sleep(5000); // Pause thread while waiting for confirmation from broker.
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    } catch (MqttException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
                 case 'X' | 'x' -> System.exit(0);
             }
@@ -60,8 +73,8 @@ public class DentistUI {
         boolean running = true;
 
         while (running) {
-            System.out.println("\n\n\n--- DENTIST USER INTERFACE ---\n");
-            System.out.println("--- "+name+" ---");
+            System.out.println("\n\n\n--- DENTIST USER INTERFACE ---");
+            System.out.println("--- "+name+"\n");
             System.out.println("Select an option from the menu below: \n");
             System.out.println("1: View Schedule");
             System.out.println("2. Add time slots to schedule");
@@ -72,13 +85,7 @@ public class DentistUI {
 
             switch (option) {
                 case '1' -> displayTimeSlots();
-                case '2' -> {
-                    try {
-                        addTimeSlots(clientMqtt);
-                    } catch (MqttException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
+                case '2' -> { try { addTimeSlots(clientMqtt); } catch (MqttException e) { throw new RuntimeException(e); }}
                 case '3' -> System.out.println("To be implemented");
                 case 'X' | 'x' -> {
                     running = false;
@@ -109,7 +116,7 @@ public class DentistUI {
     // Use in the MQTT callback method mqttCallback()
     private static void updateTimeSlot(String timeSlotKey, String newStatus) {
         TimeSlot timeSlot = timeSlots.get(timeSlotKey);
-        if (timeSlot != null && (timeSlot.getAvailable() == true)) {
+        if (timeSlot != null && (timeSlot.getAvailable())) {
             timeSlot.setStatus(newStatus);
         }
     }
@@ -119,7 +126,7 @@ public class DentistUI {
     private static void displayTimeSlots() {
         System.out.println("\nMY SCHEDULE:\n");
         for (Map.Entry<String, TimeSlot> entry : timeSlots.entrySet()) {
-            if(entry.getValue().getAvailable() == true) {
+            if(entry.getValue().getAvailable()) {
                 System.out.println("|| " + entry.getKey() + " || " + entry.getValue().getStatus() + " ||" );
             }
 
@@ -133,47 +140,20 @@ public class DentistUI {
     private static void addTimeSlots(ClientMqtt clientMqtt) throws MqttException {
         System.out.println("\nEnter time slots to mark as available (HH:MM), separate by commas (e.g., 08:00,09:00)\n");
         String input = scanner.nextLine();
+        final String DENTIST_AVAILABLE = " flossboss/appointment/availability";
+
         String[] addedSlots = input.split(",");
         for (String slot : addedSlots) {
             slot = slot.trim();
             TimeSlot timeslot = timeSlots.get(slot);
             if (timeslot != null) {
                 timeslot.setAvailable(true);
-                clientMqtt.publish("flossboss/dentist/availableTimeSlot", slot);
+                clientMqtt.publish(DENTIST_AVAILABLE, slot);
             } else {
                 System.out.println("Invalid time slot: "+slot);
             }
         }
         displayTimeSlots();
-    }
-
-
-    // Handle MQTT messages
-    private static void mqttCallback(ClientMqtt clientMqtt) {
-        try {
-            clientMqtt.subscribe("flossboss/timeSlots");
-            clientMqtt.setCallback(new MqttCallback() {
-                @Override
-                public void connectionLost(Throwable throwable) {
-                    System.out.println("Connection lost: " + throwable.getMessage());
-                }
-                @Override
-                public void messageArrived(String topic, MqttMessage message) throws Exception {
-                    // Split message at ","
-                    String[] messageContent = new String(message.getPayload()).split(",");
-                    String timeSlot = messageContent[0];
-                    String bookingStatus = messageContent[1];
-                    updateTimeSlot(timeSlot, bookingStatus);
-                    displayTimeSlots();
-                }
-                @Override
-                public void deliveryComplete(IMqttDeliveryToken token) {
-                }
-            });
-
-        } catch (MqttException exception) {
-            throw new RuntimeException(exception);
-        }
     }
 
     private static void loginDentist(ClientMqtt clientMqtt) throws MqttException {
@@ -197,11 +177,6 @@ public class DentistUI {
         jsonDentist.put("clinicId", clinicId);
         String payload = jsonDentist.toString();
         clientMqtt.publish(LOGIN_REQUEST_TOPIC, payload);
-
-        //TODO
-        // USE QOS for confirmation and subscribe to topic that confirms authentication
-        // Update "authenticated" variable
-
     }
 
     private static void registerDentist(ClientMqtt clientMqtt) throws MqttException {
@@ -228,11 +203,49 @@ public class DentistUI {
         jsonDentist.put("clinicId", clinicId);
         String payload = jsonDentist.toString();
         clientMqtt.publish(REGISTER_REQUEST_TOPIC, payload);
+    }
 
-        //TODO
-        // USE QOS to for confirmation and subscribe to a topic that confirms created account
-        // Update "authenticated" variable
 
+    // Handle MQTT messages
+    private static void mqttCallback(ClientMqtt clientMqtt) {
+        final String TIMESLOT_UPDATE_TOPIC = "flossboss/timeslot";
+        final String REGISTER_CONFIRMATION_TOPIC = "flossboss/dentist/register/confirmation";
+        final String LOGIN_CONFIRMATION_TOPIC = "flossboss/dentist/login/confirmation";
+
+        try {
+            clientMqtt.subscribe(TIMESLOT_UPDATE_TOPIC);
+            clientMqtt.subscribe(REGISTER_CONFIRMATION_TOPIC);
+            clientMqtt.setCallback(new MqttCallback() {
+                @Override
+                public void connectionLost(Throwable throwable) { System.out.println("Connection lost: " + throwable.getMessage());}
+                @Override
+                public void messageArrived(String topic, MqttMessage message) throws Exception {
+                    if(topic.equals(TIMESLOT_UPDATE_TOPIC) && authenticated) {
+                        // Split message at ","
+                        String[] messageContent = new String(message.getPayload()).split(",");
+                        String timeSlotKey = messageContent[0];
+                        String bookingStatus = messageContent[1];
+
+                        TimeSlot timeSlot = timeSlots.get(timeSlotKey);
+                        if (timeSlot != null && timeSlot.getAvailable()) {
+                            updateTimeSlot(timeSlotKey, bookingStatus);
+                            displayTimeSlots();
+                        }
+                    }
+                    if(topic.equals(REGISTER_CONFIRMATION_TOPIC) || topic.equals(LOGIN_CONFIRMATION_TOPIC)) {
+                        String confirmation = new String(message.getPayload());
+                        if (confirmation.contains("1")) {
+                            authenticated = true;
+                        }
+                    }
+                }
+                @Override
+                public void deliveryComplete(IMqttDeliveryToken token) {
+                }
+            });
+        } catch (MqttException exception) {
+            throw new RuntimeException(exception);
+        }
     }
 
 }   // CLASS CLOSING BRACKET
