@@ -2,17 +2,23 @@ import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+
+import java.sql.SQLOutput;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.TreeMap;
+
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class DentistUI {
 
     private static final Map<String, TimeSlot> timeSlots = new TreeMap<>(); // Map to store time slots, treemap stores time slots in order
+    private static final String[] slots = {"08:00 - 09:00", "09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00", "12:00 - 13:00", "13:00 - 14:00", "14:00 - 15:00", "15:00 - 16:00", "16:00 - 17:00"};
     private static Scanner scanner; // Scanner object to read user input
     private static String name; // Dentist name, specified in registerDentist(), printed in menu
     private static boolean authenticated = false;   // condition to run authenticated loop, updated in mqttCallback()
+    private static String dentistId;
 
     public static void main(String[] args) {
 
@@ -106,7 +112,6 @@ public class DentistUI {
     // Initialize timeslots map. Time is the key.
     // Each key maps to the TimeSlot object that has two fields (booking status and dentist availability)
     private static void initializeTimeSlots() {
-        String[] slots = {"08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"};
         for (String slot: slots) {
             timeSlots.put(slot, new TimeSlot(" Free ", false ));
         }
@@ -133,27 +138,33 @@ public class DentistUI {
         }
     }
 
-    // Option 2 in MAIN UI LOOP
-    // Prompt dentist to enter their available time slots.
-    // Separate slots by commas and put them in an array (addedSlots)
-    // Loop through addedSlots, if the time slot exists in the timeSlots map, mark it as available and publish to mqtt.
     private static void addTimeSlots(ClientMqtt clientMqtt) throws MqttException {
-        System.out.println("\nEnter time slots to mark as available (HH:MM), separate by commas (e.g., 08:00,09:00)\n");
+        System.out.println("\nEnter the numbers of the time slots to mark as available, separate by commas (e.g., 1,2)\n");
+        // Print all slots to user
+        for (int i = 0; i < slots.length; i++) {
+            System.out.println((i + 1) + ". " + slots[i]);
+        }
         String input = scanner.nextLine();
-        final String DENTIST_AVAILABLE = " flossboss/appointment/availability";
 
-        String[] addedSlots = input.split(",");
-        for (String slot : addedSlots) {
-            slot = slot.trim();
-            TimeSlot timeslot = timeSlots.get(slot);
-            if (timeslot != null) {
-                timeslot.setAvailable(true);
-                clientMqtt.publish(DENTIST_AVAILABLE, slot);
-            } else {
-                System.out.println("Invalid time slot: "+slot);
+        final String DENTIST_AVAILABLE_TOPIC = "flossboss/appointment/availability/"+dentistId;
+        JSONArray selectedSlots = new JSONArray();  // Store selected slots in json array
+
+        String[] addedSlots = input.split(","); // Store added slots in an array, split indexes by comma
+        for (String slotIndex : addedSlots) {   // Loop through each element in the addedSlots array
+            int index = Integer.parseInt(slotIndex.trim()) - 1; // Convert string to integer and -1 for array indexing
+            // Check if the element is within the bounds of the slots array.
+            if (index >= 0 && index < slots.length) {
+                String slot = slots[index]; // Get the time slot string that matches the users parsed selected index. E.g., slots[0] is "08:00 - 09:00"
+                TimeSlot timeslot = timeSlots.get(slot);    // Get TimeSlot object with key (slot string e.g., 08:00 - 09:00)
+                if (timeslot != null) {     // Check if timeslot object exists
+                    timeslot.setAvailable(true);    // Mark as available
+                    selectedSlots.put(slot);    // Add slot string to json array selectedSlots
+                }
             }
         }
-        displayTimeSlots();
+        String payload = selectedSlots.toString();  // Convert json array to string
+        clientMqtt.publish(DENTIST_AVAILABLE_TOPIC, payload);   // publish all selected slots in one message
+        displayTimeSlots(); // display schedule
     }
 
     private static void loginDentist(ClientMqtt clientMqtt) throws MqttException {
@@ -210,7 +221,7 @@ public class DentistUI {
     private static void mqttCallback(ClientMqtt clientMqtt) {
         final String TIMESLOT_UPDATE_TOPIC = "flossboss/timeslot";
         final String REGISTER_CONFIRMATION_TOPIC = "flossboss/dentist/register/confirmation";
-        final String LOGIN_CONFIRMATION_TOPIC = "flossboss/dentist/login/confirmation";
+        final String LOGIN_CONFIRMATION_TOPIC = "flossboss/dentist/login/confirmation/"+dentistId;
 
         try {
             clientMqtt.subscribe(TIMESLOT_UPDATE_TOPIC);
@@ -221,10 +232,9 @@ public class DentistUI {
                 @Override
                 public void messageArrived(String topic, MqttMessage message) throws Exception {
                     if(topic.equals(TIMESLOT_UPDATE_TOPIC) && authenticated) {
-                        // Split message at ","
-                        String[] messageContent = new String(message.getPayload()).split(",");
-                        String timeSlotKey = messageContent[0];
-                        String bookingStatus = messageContent[1];
+                        JSONObject timeslotUpdate = new JSONObject(new String(message.getPayload()));
+                        String timeSlotKey = timeslotUpdate.getString("timeSlot");
+                        String bookingStatus = timeslotUpdate.getString("bookingStatus");
 
                         TimeSlot timeSlot = timeSlots.get(timeSlotKey);
                         if (timeSlot != null && timeSlot.getAvailable()) {
@@ -233,9 +243,10 @@ public class DentistUI {
                         }
                     }
                     if(topic.equals(REGISTER_CONFIRMATION_TOPIC) || topic.equals(LOGIN_CONFIRMATION_TOPIC)) {
-                        String confirmation = new String(message.getPayload());
-                        if (confirmation.contains("1")) {
+                        JSONObject confirmation = new JSONObject(new String(message.getPayload()));
+                        if (confirmation.getBoolean("confirmed")) {
                             authenticated = true;
+                            dentistId = confirmation.getString("dentistId");    // save dentistId
                         }
                     }
                 }
