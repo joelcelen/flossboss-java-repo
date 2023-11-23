@@ -109,7 +109,7 @@ public class DentistUI {
      * Only call methods in main
      ***********************************************************/
 
-    // Initialize timeslots map. Time is the key.
+    // Initialize timeslots map. Time is the key (e.g., "08:00 - 09:00").
     // Each key maps to the TimeSlot object that has two fields (booking status and dentist availability)
     private static void initializeTimeSlots() {
         for (String slot: slots) {
@@ -169,7 +169,7 @@ public class DentistUI {
 
     private static void loginDentist(ClientMqtt clientMqtt) throws MqttException {
 
-        final String LOGIN_REQUEST_TOPIC = "flossboss/dentist/login/request";
+        final String LOGIN_REQUEST_TOPIC = "flossboss/dentist/login/request/"+dentistId;
         String email;
         String password;
         String clinicId;
