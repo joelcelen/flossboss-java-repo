@@ -9,6 +9,19 @@ public class LoggingService {
         BrokerClient brokerClient = new BrokerClient();
         brokerClient.connect();
 
+        // Create Database Client with placeholder URI, testing db so no need to mask
+        DatabaseClient databaseClient = new DatabaseClient("mongodb+srv://flossboss-test:vaSEAvtHSumlixAv@test-cluster.wlvtb6y.mongodb.net/?retryWrites=true&w=majority");
+
+        // Connect to the specific DB within the cluster
+        databaseClient.connect("services-db");
+
+        // Set the collection on which you want to operate on
+        databaseClient.setCollection("services");
+
+        // Get specific test item, placeholder
+        String service = databaseClient.getID("LoggingService");
+        System.out.println(databaseClient.readItem(service));
+
         // Publish payload to topic, placeholder
         brokerClient.publish("flossboss/test/publish", "I'm the LoggingService", 0);
 
