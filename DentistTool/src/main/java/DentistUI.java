@@ -17,6 +17,7 @@ public class DentistUI {
     private static final String[] slots = {"08:00 - 09:00", "09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00", "12:00 - 13:00", "13:00 - 14:00", "14:00 - 15:00", "15:00 - 16:00", "16:00 - 17:00"};
     private static Scanner scanner; // Scanner object to read user input
     private static String name; // Dentist name, specified in registerDentist(), printed in menu
+    private static String email; // Dentist email, specified by user, used in MQTT topic to confirm dentist registration
     private static boolean authenticated = false;   // condition to run authenticated loop, updated in mqttCallback()
     private static String dentistId;
 
@@ -32,7 +33,7 @@ public class DentistUI {
             return;
         }
         initializeTimeSlots();  // Initialize the timeSlots map and MQTT callback
-        mqttCallback(clientMqtt);   // Initialize MQTT callback
+        // mqttCallback(clientMqtt);   // Initialize MQTT callback
 
         /*******************************
          *  Authenticate dentist loop
@@ -169,8 +170,7 @@ public class DentistUI {
 
     private static void loginDentist(ClientMqtt clientMqtt) throws MqttException {
 
-        final String LOGIN_REQUEST_TOPIC = "flossboss/dentist/login/request/"+dentistId;
-        String email;
+        final String LOGIN_REQUEST_TOPIC = "flossboss/dentist/login/request/"+email;
         String password;
         String clinicId;
 
@@ -182,6 +182,11 @@ public class DentistUI {
         System.out.print("Enter clinic-ID: ");
         clinicId = scanner.nextLine();
 
+        // Initialize MQTT callback after email is set so that the callback
+        // is subscribed to the correct topic ("flossboss/dentist/register/confirmation/"+email)
+        mqttCallback(clientMqtt);
+
+        // Store dentist information in JSON object, convert JSON object to String and publish to MQTT Broker
         JSONObject jsonDentist = new JSONObject();
         jsonDentist.put("email", email);
         jsonDentist.put("password", password);
@@ -193,7 +198,6 @@ public class DentistUI {
     private static void registerDentist(ClientMqtt clientMqtt) throws MqttException {
 
         final String REGISTER_REQUEST_TOPIC = "flossboss/dentist/register/request";
-        String email;
         String password;
         String clinicId;
 
@@ -207,6 +211,11 @@ public class DentistUI {
         System.out.print("Enter clinic-ID: ");
         clinicId = scanner.nextLine();
 
+        // Initialize MQTT callback after email is set so that the callback
+        // is subscribed to the correct topic ("flossboss/dentist/register/confirmation/"+email)
+        mqttCallback(clientMqtt);
+
+        // Store dentist information in JSON object, convert JSON object to String and publish to MQTT Broker
         JSONObject jsonDentist = new JSONObject();
         jsonDentist.put("fullName", name);
         jsonDentist.put("email", email);
@@ -220,9 +229,8 @@ public class DentistUI {
     // Handle MQTT messages
     private static void mqttCallback(ClientMqtt clientMqtt) {
         final String TIMESLOT_UPDATE_TOPIC = "flossboss/timeslot";
-        final String REGISTER_CONFIRMATION_TOPIC = "flossboss/dentist/register/confirmation";
-        final String LOGIN_CONFIRMATION_TOPIC = "flossboss/dentist/login/confirmation/"+dentistId;
-
+        String REGISTER_CONFIRMATION_TOPIC = "flossboss/dentist/register/confirmation/"+email;
+        final String LOGIN_CONFIRMATION_TOPIC = "flossboss/dentist/login/confirmation/"+email;
         try {
             clientMqtt.subscribe(TIMESLOT_UPDATE_TOPIC);
             clientMqtt.subscribe(REGISTER_CONFIRMATION_TOPIC);
