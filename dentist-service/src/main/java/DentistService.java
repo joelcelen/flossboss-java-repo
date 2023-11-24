@@ -38,9 +38,10 @@ public class DentistService {
                 .append("fullName","Isaac Dentistson")
                 .append("email","isaac@dentist.com")
                 .append("password","isaac123")
-                .append("clinicID", "1983456");
+                .append("clinicId", "1983456");
         databaseClient.createItem(dentistDocument);
 */
+        // Get dentist id by email
         String dentistId = databaseClient.getID("isaac@dentist.com");
         System.out.println(databaseClient.readItem(dentistId));
 

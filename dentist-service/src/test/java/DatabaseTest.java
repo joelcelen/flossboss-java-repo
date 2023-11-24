@@ -15,14 +15,14 @@ public class DatabaseTest {
     public void before(){
         this.dbClient = new DatabaseClient("mongodb+srv://flossboss-test:vaSEAvtHSumlixAv@test-cluster.wlvtb6y.mongodb.net/?retryWrites=true&w=majority");
         this.dbClient.connect("services-db");
-        this.dbClient.setCollection("services");
+        this.dbClient.setCollection("dentists");
         Document item = new Document()
-                .append("service_name", "DentistService_Test")
-                .append("version", 1)
-                .append("status", "testing")
-                .append("available", false);
+                .append("fullName","Isaac Dentistson")
+                .append("email","isaac@dentist.com")
+                .append("password","isaac123")
+                .append("clinicId", "1983456");
         dbClient.createItem(item);
-        this.itemID = dbClient.getID("DentistService_Test");
+        this.itemID = dbClient.getID("isaac@dentist.com");
     }
 
     /** Deletes the test-item and closes the connection after each test **/
@@ -36,19 +36,19 @@ public class DatabaseTest {
     @Test
     public void readItem(){
         String result = dbClient.readItem(this.itemID);
-        String expected = String.format("{\"_id\": {\"$oid\": \"%s\"}, \"service_name\": \"DentistService_Test\", \"version\": 1, \"status\": \"testing\", \"available\": false}", this.itemID);
+        String expected = String.format("{\"_id\": {\"$oid\": \"%s\"}, \"fullName\": \"Isaac Dentistson\", \"email\": \"isaac@dentist.com\", \"password\": \"isaac123\", \"clinicId\": \"1983456\"}", this.itemID);
         assertEquals(expected, result);
     }
 
     /** Fetches an item and updates one of its attributes, then asserts that the changes were made **/
     @Test
     public void updateItem(){
-        dbClient.updateItem(this.itemID, "service_name", "DentistService_Updated");
+        dbClient.updateItem(this.itemID, "fullName", "Isaac New name");
         String result = dbClient.readItem(this.itemID);
-        String expected = String.format("{\"_id\": {\"$oid\": \"%s\"}, \"service_name\": \"DentistService_Updated\", \"version\": 1, \"status\": \"testing\", \"available\": false}", this.itemID);
+        String expected = String.format("{\"_id\": {\"$oid\": \"%s\"}, \"fullName\": \"Isaac New name\", \"email\": \"isaac@dentist.com\", \"password\": \"isaac123\", \"clinicId\": \"1983456\"}", this.itemID);
         assertEquals(expected, result);
 
         // Change back to the original value since the jobs are not guaranteed to run in order
-        dbClient.updateItem(this.itemID, "service_name", "DentistService_Test");
+        dbClient.updateItem(this.itemID, "fullName", "Isaac Dentistson");
     }
 }
