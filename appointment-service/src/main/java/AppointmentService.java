@@ -13,11 +13,11 @@ public class AppointmentService {
         threadPool.submit(pendingQueue);
 
         // Instantiate MQTT Broker instance
-        BrokerClient brokerClient = new BrokerClient();
+        BrokerClient brokerClient = BrokerClient.getInstance();
         brokerClient.connect();
 
         // Create Database Client with placeholder URI, testing db so no need to mask
-        DatabaseClient databaseClient = new DatabaseClient("mongodb+srv://flossboss-test:vaSEAvtHSumlixAv@test-cluster.wlvtb6y.mongodb.net/?retryWrites=true&w=majority");
+        DatabaseClient databaseClient = DatabaseClient.getInstance("mongodb+srv://flossboss-test:vaSEAvtHSumlixAv@test-cluster.wlvtb6y.mongodb.net/?retryWrites=true&w=majority");
 
         // Connect to the specific DB within the cluster
         databaseClient.connect("services-db");

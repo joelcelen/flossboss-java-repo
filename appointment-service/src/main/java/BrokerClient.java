@@ -8,14 +8,23 @@ import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
 public class BrokerClient {
+    private static BrokerClient instance;
     private MqttClient client;
     private String clientName;
     private String hiveUrl;
     private String hiveUser;
     private char[] hivePw;
 
-    public BrokerClient(){
+    private BrokerClient(){
         this.getVariables();
+    }
+
+    public static BrokerClient getInstance(){
+        if (instance == null){
+            return new BrokerClient();
+        }else{
+            return instance;
+        }
     }
 
     // Connection using the config file.

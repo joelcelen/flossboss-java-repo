@@ -1,4 +1,5 @@
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.in;
 
 import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
@@ -17,20 +18,35 @@ import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
 public class DatabaseClient {
-
+    private static DatabaseClient instance;
     private String uri;
     private MongoClient mongoClient;
     private MongoDatabase database;
     private MongoCollection<Document> collection;
 
     /** Constructor that uses URI specified in environmental file **/
-    public DatabaseClient(){
+    private DatabaseClient(){
         this.loadURI();
     }
 
     /** Constructor that takes specific URI as an argument and connects to it **/
-    public DatabaseClient(String uri){
+    private DatabaseClient(String uri){
         this.uri = uri;
+    }
+
+    public static DatabaseClient getInstance(){
+        if(instance == null){
+            return new DatabaseClient();
+        }else{
+            return instance;
+        }
+    }
+
+    public static DatabaseClient getInstance(String uri){
+        if(instance == null){
+            return new DatabaseClient(uri);
+        }
+        return instance;
     }
 
     /** Creates the MongoClient and takes a specific DB within your cluster **/
