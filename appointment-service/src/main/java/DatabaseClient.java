@@ -1,5 +1,4 @@
 import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.in;
 
 import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
@@ -36,15 +35,14 @@ public class DatabaseClient {
 
     public static DatabaseClient getInstance(){
         if(instance == null){
-            return new DatabaseClient();
-        }else{
-            return instance;
+            instance = new DatabaseClient();
         }
+        return instance;
     }
 
     public static DatabaseClient getInstance(String uri){
         if(instance == null){
-            return new DatabaseClient(uri);
+            instance = new DatabaseClient(uri);
         }
         return instance;
     }

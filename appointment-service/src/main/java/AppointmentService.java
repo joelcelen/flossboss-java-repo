@@ -1,15 +1,14 @@
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class AppointmentService {
     public static void main(String[] args) throws InterruptedException {
 
-        ExecutorService threadPool = Executors.newFixedThreadPool(1);
-        PendingQueue pendingQueue = new PendingQueue();
+        // Create new thread pool with 8 threads
+        ExecutorService threadPool = Executors.newFixedThreadPool(8);
+
+        // Create the delay queue and assign one thread to it
+        PendingQueue pendingQueue = PendingQueue.getInstance();
         threadPool.submit(pendingQueue);
 
         // Instantiate MQTT Broker instance
@@ -29,41 +28,12 @@ public class AppointmentService {
         String service = databaseClient.getID("AppointmentService");
         System.out.println(databaseClient.readItem(service));
 
-        // Publish payload to topic, placeholder
-        brokerClient.publish("flossboss/test/publish", "I'm the AppointmentService", 0);
+        // Subscribe to topics, placeholders
+        brokerClient.subscribe(Topic.TEST_SUBSCRIBE_PENDING.getStringValue(),0);
+        brokerClient.subscribe(Topic.TEST_SUBSCRIBE_CANCEL.getStringValue(),0);
+        brokerClient.subscribe(Topic.TEST_SUBSCRIBE_CONFIRM.getStringValue(), 0);
 
-        // Subscribe to topic, placeholder
-        brokerClient.subscribe("flossboss/test/subscribe",0);
-        brokerClient.subscribe("flossboss/test/subscribe/queue",0);
-        brokerClient.subscribe("flossboss/test/subscribe/cancel",0);
-        brokerClient.subscribe("flossboss/test/subscribe/confirm",0);
-
-        // Placeholder callback functionality, replace with real logic once decided
-        brokerClient.setCallback(
-                new MqttCallback() {
-                    @Override
-                    public void connectionLost(Throwable throwable) {
-                        System.out.println("Connection Lost");
-                    }
-
-                    @Override
-                    public void messageArrived(String topic, MqttMessage payload) throws Exception {
-                        // routes the incoming payloads to the correct handler
-                        if(topic.equals("flossboss/test/subscribe/queue")){
-                            pendingQueue.enqueue(payload.toString());
-                            System.out.println("Payload Received" + payload);
-                        }else if (topic.equals("flossboss/test/subscribe/cancel")){
-                            System.out.println("Appointment Cancelled");
-                        }else if (topic.equals("flossboss/test/subscribe/confirm")) {
-                            System.out.println("Appointment Confirmed");
-                        }
-                    }
-
-                    @Override
-                    public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
-                        System.out.println("Delivery Complete");
-                    }
-                }
-        );
+        // Creates an instance of the appointment handler and binds it to the callback
+        brokerClient.setCallback(new AppointmentHandler(threadPool));
     }
 }

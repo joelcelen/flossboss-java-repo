@@ -21,10 +21,9 @@ public class BrokerClient {
 
     public static BrokerClient getInstance(){
         if (instance == null){
-            return new BrokerClient();
-        }else{
-            return instance;
+            instance =  new BrokerClient();
         }
+        return instance;
     }
 
     // Connection using the config file.
