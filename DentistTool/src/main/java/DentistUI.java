@@ -2,12 +2,9 @@ import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-
-import java.sql.SQLOutput;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.TreeMap;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -32,8 +29,8 @@ public class DentistUI {
             System.out.println("Failed to configure MQTT client");
             return;
         }
-        initializeTimeSlots();  // Initialize the timeSlots map and MQTT callback
-        // mqttCallback(clientMqtt);   // Initialize MQTT callback
+        // Initialize the timeSlots map and MQTT callback
+        initializeTimeSlots();
 
         /*******************************
          *  Authenticate dentist loop
@@ -52,7 +49,7 @@ public class DentistUI {
                 case '1' -> {
                     try {
                         loginDentist(clientMqtt);
-                        Thread.sleep(5000); // Pause thread while waiting for confirmation from broker.
+                        Thread.sleep(1000); // Pause thread while waiting for confirmation from broker.
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     } catch (MqttException e) {
@@ -62,7 +59,7 @@ public class DentistUI {
                 case '2' -> {
                     try {
                         registerDentist(clientMqtt);
-                        Thread.sleep(5000); // Pause thread while waiting for confirmation from broker.
+                        Thread.sleep(1000); // Pause thread while waiting for confirmation from broker.
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     } catch (MqttException e) {
@@ -170,7 +167,7 @@ public class DentistUI {
 
     private static void loginDentist(ClientMqtt clientMqtt) throws MqttException {
 
-        final String LOGIN_REQUEST_TOPIC = "flossboss/dentist/login/request/"+email;
+        final String LOGIN_REQUEST_TOPIC = "flossboss/dentist/login/request";
         String password;
         String clinicId;
 
@@ -230,10 +227,11 @@ public class DentistUI {
     private static void mqttCallback(ClientMqtt clientMqtt) {
         final String TIMESLOT_UPDATE_TOPIC = "flossboss/timeslot";
         String REGISTER_CONFIRMATION_TOPIC = "flossboss/dentist/register/confirmation/"+email;
-        final String LOGIN_CONFIRMATION_TOPIC = "flossboss/dentist/login/confirmation/"+email;
+        String LOGIN_CONFIRMATION_TOPIC = "flossboss/dentist/login/confirmation/"+email;
         try {
             clientMqtt.subscribe(TIMESLOT_UPDATE_TOPIC);
             clientMqtt.subscribe(REGISTER_CONFIRMATION_TOPIC);
+            clientMqtt.subscribe(LOGIN_CONFIRMATION_TOPIC);
             clientMqtt.setCallback(new MqttCallback() {
                 @Override
                 public void connectionLost(Throwable throwable) { System.out.println("Connection lost: " + throwable.getMessage());}
@@ -250,11 +248,19 @@ public class DentistUI {
                             displayTimeSlots();
                         }
                     }
-                    if(topic.equals(REGISTER_CONFIRMATION_TOPIC) || topic.equals(LOGIN_CONFIRMATION_TOPIC)) {
+                    if(topic.equals(REGISTER_CONFIRMATION_TOPIC)) {
                         JSONObject confirmation = new JSONObject(new String(message.getPayload()));
                         if (confirmation.getBoolean("confirmed")) {
                             authenticated = true;
                             dentistId = confirmation.getString("dentistId");    // save dentistId
+                        }
+                    }
+                    if (topic.equals(LOGIN_CONFIRMATION_TOPIC)) {
+                        JSONObject confirmation = new JSONObject(new String(message.getPayload()));
+                        if (confirmation.getBoolean("confirmed")) {
+                            authenticated = true;
+                            dentistId = confirmation.getString("dentistId");    // save dentistId
+                            name = confirmation.getString("dentistName");
                         }
                     }
                 }
