@@ -27,10 +27,12 @@ public class DentistService {
      * Only call methods in main
      ***********************************************************/
 
+    // Handle incoming MQTT messages
     private static void mqttCallback (BrokerClient brokerClient, DatabaseClient databaseClient) {
+        // Specify topics
         final String REGISTER_REQUEST_TOPIC = "flossboss/dentist/register/request";
         final String LOGIN_REQUEST_TOPIC = "flossboss/dentist/login/request";
-
+        // Subscribe to topics
         brokerClient.subscribe(REGISTER_REQUEST_TOPIC, 0);
         brokerClient.subscribe(LOGIN_REQUEST_TOPIC, 0);
         brokerClient.setCallback(new MqttCallback() {
@@ -40,24 +42,31 @@ public class DentistService {
             }
             @Override
             public void messageArrived(String topic, MqttMessage mqttMessage){
-                if (topic.equals(REGISTER_REQUEST_TOPIC)) {
-                    JSONObject registerRequest = new JSONObject(new String(mqttMessage.getPayload()));
-                    String email = registerRequest.getString("email");
-                    String fullName = registerRequest.getString("fullName");
-                    String password = registerRequest.getString("password");
-                    String clinicId = registerRequest.getString("clinicId");
+                // Put mqtt callback in its own thread using runnable so that it is continuously listening for messages.
+                Runnable mqtt = () -> {
+                    if (topic.equals(REGISTER_REQUEST_TOPIC)) {
+                        // Parse incoming payload(String) into JSON Object and extract values
+                        JSONObject registerRequest = new JSONObject(new String(mqttMessage.getPayload()));
+                        String email = registerRequest.getString("email");
+                        String fullName = registerRequest.getString("fullName");
+                        String password = registerRequest.getString("password");
+                        String clinicId = registerRequest.getString("clinicId");
+                        // Use extracted values to store dentist in database
+                        registerDentist(brokerClient, databaseClient, email, fullName, password, clinicId);
+                    }
+                    if (topic.equals(LOGIN_REQUEST_TOPIC)) {
+                        // Parse incoming payload(String) into JSON Object and extract values
+                        JSONObject loginRequest = new JSONObject(new String(mqttMessage.getPayload()));
+                        String email = loginRequest.getString("email");
+                        String password = loginRequest.getString("password");
+                        String clinicId = loginRequest.getString("clinicId");
 
-                    registerDentist(brokerClient, databaseClient, email, fullName, password, clinicId);
-                }
-                if (topic.equals(LOGIN_REQUEST_TOPIC)) {
-                    JSONObject loginRequest = new JSONObject(new String(mqttMessage.getPayload()));
-                    String email = loginRequest.getString("email");
-                    String password = loginRequest.getString("password");
-                    String clinicId = loginRequest.getString("clinicId");
-
-                    boolean isLoginSuccessful = verifyLogin(databaseClient, email, password, clinicId);
-                    publishLoginConfirmation(brokerClient, databaseClient, email, isLoginSuccessful);
-                }
+                        // Check if dentist exists in database, return boolean. Use boolean to publish if dentist is authenticated or not to broker.
+                        boolean isLoginSuccessful = verifyLogin(databaseClient, email, password, clinicId);
+                        publishLoginConfirmation(brokerClient, databaseClient, email, isLoginSuccessful);
+                    }
+                };
+                new Thread(mqtt).start();
             }
             @Override
             public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
@@ -79,7 +88,7 @@ public class DentistService {
         String REGISTER_CONFIRMATION_TOPIC = "flossboss/dentist/register/confirmation/"+email;
         String dentistId = databaseClient.getID(email);
 
-        // Store confirmation and dentistId in JSON object, convert JSON object to String and publish to MQTT Broker
+        // Store "confirmed" and "dentistId" in JSON object, convert JSON object to String and publish to MQTT Broker
         JSONObject confirmation = new JSONObject();
         confirmation.put("confirmed",true);
         confirmation.put("dentistId",dentistId);
@@ -87,12 +96,12 @@ public class DentistService {
         brokerClient.publish(REGISTER_CONFIRMATION_TOPIC, payload, 0);
     }
 
+    // Boolean method called in MQTT callback that uses parameters to check if the dentist exists in the database.
     private static boolean verifyLogin(DatabaseClient databaseClient, String email, String password, String clinicId) {
-        Document query = databaseClient.findItemByEmail(email);
-        dentistName = query.getString("fullName");  // Extract name, used in publishLogin confirmation to send back dentist name (visual element in dentist UI)
-
+        Document query = databaseClient.findItemByEmail(email); // Use email to find dentist in database.
+        dentistName = query.getString("fullName");  // Extract name from database item, used in publishLoginConfirmation to send back dentist name (visual element in dentist UI)
+        // Check password and clinicId to authenticate dentist.
         if (query.getString("password").equals(password) && query.getString("clinicId").equals(clinicId)) {
-            System.out.println(query);
             return true;
         }
         System.out.println("Failed to authenticate");
@@ -100,10 +109,12 @@ public class DentistService {
 
     }
 
+    // Publish confirmation status to broker. Use boolean in parameter to publish if dentist is authenticated or not to broker
     private static void publishLoginConfirmation(BrokerClient brokerClient, DatabaseClient databaseClient, String email, boolean isLoginSuccessful) {
         String loginConfirmationTopic = "flossboss/dentist/login/confirmation/"+email;
         String dentistId = databaseClient.getID(email);
 
+        // Store "confirmed", "dentistId" and "dentistName" in JSON object, convert JSON object to String and publish to MQTT Broker
         JSONObject confirmation = new JSONObject();
         confirmation.put("confirmed", isLoginSuccessful);
         confirmation.put("dentistId", dentistId);

@@ -16,7 +16,7 @@ public class DentistUI {
     private static String name; // Dentist name, specified in registerDentist(), printed in menu
     private static String email; // Dentist email, specified by user, used in MQTT topic to confirm dentist registration
     private static boolean authenticated = false;   // condition to run authenticated loop, updated in mqttCallback()
-    private static String dentistId;
+    private static String dentistId;    // dentist ID in mongodb database
 
     public static void main(String[] args) {
 
@@ -179,8 +179,7 @@ public class DentistUI {
         System.out.print("Enter clinic-ID: ");
         clinicId = scanner.nextLine();
 
-        // Initialize MQTT callback after email is set so that the callback
-        // is subscribed to the correct topic ("flossboss/dentist/register/confirmation/"+email)
+        // Initialize MQTT callback after email is set so that the subscribed topic includes email ("flossboss/dentist/register/confirmation/"+email)
         mqttCallback(clientMqtt);
 
         // Store dentist information in JSON object, convert JSON object to String and publish to MQTT Broker
@@ -208,8 +207,7 @@ public class DentistUI {
         System.out.print("Enter clinic-ID: ");
         clinicId = scanner.nextLine();
 
-        // Initialize MQTT callback after email is set so that the callback
-        // is subscribed to the correct topic ("flossboss/dentist/register/confirmation/"+email)
+        // Initialize MQTT callback after email is set so that the subscribed topic includes email ("flossboss/dentist/register/confirmation/"+email)
         mqttCallback(clientMqtt);
 
         // Store dentist information in JSON object, convert JSON object to String and publish to MQTT Broker
@@ -223,7 +221,7 @@ public class DentistUI {
     }
 
 
-    // Handle MQTT messages
+    // Handle incoming MQTT messages
     private static void mqttCallback(ClientMqtt clientMqtt) {
         final String TIMESLOT_UPDATE_TOPIC = "flossboss/timeslot";
         String REGISTER_CONFIRMATION_TOPIC = "flossboss/dentist/register/confirmation/"+email;
@@ -252,15 +250,15 @@ public class DentistUI {
                         JSONObject confirmation = new JSONObject(new String(message.getPayload()));
                         if (confirmation.getBoolean("confirmed")) {
                             authenticated = true;
-                            dentistId = confirmation.getString("dentistId");    // save dentistId
+                            dentistId = confirmation.getString("dentistId");    // Save dentistId, might be used later when appointment management is further specified.
                         }
                     }
                     if (topic.equals(LOGIN_CONFIRMATION_TOPIC)) {
                         JSONObject confirmation = new JSONObject(new String(message.getPayload()));
                         if (confirmation.getBoolean("confirmed")) {
                             authenticated = true;
-                            dentistId = confirmation.getString("dentistId");    // save dentistId
-                            name = confirmation.getString("dentistName");
+                            dentistId = confirmation.getString("dentistId");    // Save dentistId, might be used later when appointment management is further specified.
+                            name = confirmation.getString("dentistName");       // Extract name from payload so that it is displayed in UI
                         }
                     }
                 }
