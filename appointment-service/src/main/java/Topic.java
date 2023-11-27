@@ -4,7 +4,10 @@ public enum Topic {
     SUBSCRIBE_PENDING("flossboss/appointment/request/pending"),
     SUBSCRIBE_CANCEL("flossboss/appointment/request/cancel"),
     SUBSCRIBE_CONFIRM("flossboss/appointment/request/confirm"),
-    PUBLISH_UPDATE("flossboss/appointment/update"),
+    PUBLISH_UPDATE_PENDING("flossboss/appointment/update/pending"),
+    PUBLISH_UPDATE_CANCEL("flossboss/appointment/update/cancel"),
+    PUBLISH_UPDATE_CONFIRM("flossboss/appointment/update/confirm"),
+    PUBLISH_UPDATE_TIMEOUT("flossboss/appointment/update/timeout"),
 
     /** Topics for testing purposes **/
     TEST_SUBSCRIBE_PENDING("flossboss/test/subscribe/pending"),

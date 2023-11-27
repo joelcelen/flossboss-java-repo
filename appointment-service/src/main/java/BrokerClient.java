@@ -48,7 +48,6 @@ public class BrokerClient {
             MqttMessage message = new MqttMessage(content.getBytes());
             message.setQos(qos);
             this.client.publish(topic, message);
-            System.out.println("Message published");
         } catch(MqttException me) {
             handleMqttException(me);
         }

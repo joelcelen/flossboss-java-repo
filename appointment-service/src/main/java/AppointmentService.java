@@ -1,3 +1,5 @@
+import org.bson.Document;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -16,22 +18,17 @@ public class AppointmentService {
         brokerClient.connect();
 
         // Create Database Client with placeholder URI, testing db so no need to mask
-        DatabaseClient databaseClient = DatabaseClient.getInstance("mongodb+srv://flossboss-test:vaSEAvtHSumlixAv@test-cluster.wlvtb6y.mongodb.net/?retryWrites=true&w=majority");
-
+        DatabaseClient databaseClient = DatabaseClient.getInstance();
         // Connect to the specific DB within the cluster
-        databaseClient.connect("services-db");
+        databaseClient.connect("appointments");
 
         // Set the collection on which you want to operate on
-        databaseClient.setCollection("services");
-
-        // Get specific test item, placeholder
-        String service = databaseClient.getID("AppointmentService");
-        System.out.println(databaseClient.readItem(service));
+        databaseClient.setCollection("timeslots");
 
         // Subscribe to topics, placeholders
-        brokerClient.subscribe(Topic.TEST_SUBSCRIBE_PENDING.getStringValue(),0);
-        brokerClient.subscribe(Topic.TEST_SUBSCRIBE_CANCEL.getStringValue(),0);
-        brokerClient.subscribe(Topic.TEST_SUBSCRIBE_CONFIRM.getStringValue(), 0);
+        brokerClient.subscribe(Topic.SUBSCRIBE_PENDING.getStringValue(),0);
+        brokerClient.subscribe(Topic.SUBSCRIBE_CANCEL.getStringValue(),0);
+        brokerClient.subscribe(Topic.SUBSCRIBE_CONFIRM.getStringValue(), 0);
 
         // Creates an instance of the appointment handler and binds it to the callback
         brokerClient.setCallback(new AppointmentHandler(threadPool));
