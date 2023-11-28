@@ -5,8 +5,8 @@ import java.util.concurrent.DelayQueue;
 public class PendingQueue implements Runnable{
 
     private static PendingQueue instance;
-    private final DatabaseClient databaseClient = DatabaseClient.getInstance();
-    private final BrokerClient brokerClient = BrokerClient.getInstance();
+    private DatabaseClient databaseClient = DatabaseClient.getInstance();
+    private BrokerClient brokerClient = BrokerClient.getInstance();
     private final DelayQueue<PendingAppointment> delayQueue = new DelayQueue<>();
 
     private PendingQueue(){}
@@ -35,21 +35,40 @@ public class PendingQueue implements Runnable{
                 String appointmentId = pendingAppointment.getAppointmentId();
 
                 // Check if appointment is still pending, if true set to false
-                if(databaseClient.isPending(appointmentId)){
-                    databaseClient.updateBoolean(appointmentId, "isPending", false);
-                    databaseClient.updateString(appointmentId, "_userId", "none");
-
-                    // Print operation in console and publish the JSON back
-                    System.out.println("Appointment with id: " + appointmentId + " is no longer pending");
-                    String payloadResponse = databaseClient.readItem(appointmentId).toJson();
-                    brokerClient.publish(Topic.PUBLISH_UPDATE_TIMEOUT.getStringValue(), payloadResponse, 0);
-                }else{
-                    // Appointment was not pending when dequeued
-                    System.out.println("Appointment with id: " + appointmentId + " already processed");
-                }
+                handleTimeout(appointmentId);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    public void handleTimeout(String appointmentId){
+
+        String dequeuedAppointment = appointmentId;
+
+        if(databaseClient.isPending(dequeuedAppointment)){
+            databaseClient.updateBoolean(dequeuedAppointment, "isPending", false);
+            databaseClient.updateString(dequeuedAppointment, "_userId", "none");
+
+            // Print operation in console and publish the JSON back
+            System.out.println("Appointment with id: " + dequeuedAppointment + " is no longer pending");
+            String payloadResponse = databaseClient.readItem(dequeuedAppointment).toJson();
+            brokerClient.publish(Topic.PUBLISH_UPDATE_TIMEOUT.getStringValue(), payloadResponse, 0);
+        }else{
+            // Appointment was not pending when dequeued
+            System.out.println("Appointment with id: " + dequeuedAppointment + " already processed");
+        }
+    }
+    public void resetState() {
+        // Clear the delayQueue to reset its state
+        delayQueue.clear();
+    }
+
+    public void setDatabaseClient(DatabaseClient databaseClient){
+        this.databaseClient = databaseClient;
+    }
+
+    public void setBrokerClient(BrokerClient brokerClient){
+        this.brokerClient = brokerClient;
     }
 }
