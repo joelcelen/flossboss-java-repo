@@ -58,6 +58,7 @@ public class ClientMqtt {
 
             ClientMqtt clientMqtt = new ClientMqtt(brokerURL, clientId);
             clientMqtt.connect(hiveUsername, hivePassword);
+            System.out.println("Connected to broker");
             return clientMqtt;
         } catch (IOException | MqttException e) {
             System.out.println("Error configuring MQTT client: " + e.getMessage());

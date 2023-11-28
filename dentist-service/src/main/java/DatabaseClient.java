@@ -114,10 +114,15 @@ public class DatabaseClient {
         return result.iterator().hasNext();
     }
 
-    /** Gets the auto generated ID based on name **/
-    public String getID(String name){
+    /** Find item in DB based on email */
+    public Document findItemByEmail(String email) {
+        return collection.find(eq("email",email)).first();
+    }
+
+    /** Gets the auto generated ID based on email **/
+    public String getID(String email){
         String id;
-        Document query = collection.find(eq("service_name", name)).first();
+        Document query = collection.find(eq("email", email)).first();
         if (query != null){
             id = query.get("_id").toString();
         } else {
