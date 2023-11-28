@@ -7,15 +7,21 @@ import java.util.concurrent.ExecutorService;
 
 public class AppointmentHandler implements MqttCallback {
 
-    private final PendingQueue pendingQueue = PendingQueue.getInstance();
-    private final BrokerClient brokerClient = BrokerClient.getInstance();
-    private final DatabaseClient databaseClient = DatabaseClient.getInstance();
+    private PendingQueue pendingQueue = PendingQueue.getInstance();
+    private BrokerClient brokerClient = BrokerClient.getInstance();
+    private DatabaseClient databaseClient = DatabaseClient.getInstance();
     private final ExecutorService threadPool;
 
     public AppointmentHandler(ExecutorService threadPool){
         this.threadPool = threadPool;
     }
 
+    public AppointmentHandler(ExecutorService threadPool, PendingQueue pendingQueue, BrokerClient brokerClient, DatabaseClient databaseClient) {
+        this.threadPool = threadPool;
+        this.pendingQueue = pendingQueue;
+        this.brokerClient = brokerClient;
+        this.databaseClient = databaseClient;
+    }
     @Override
     public void connectionLost(Throwable throwable) {
         System.out.println("Connection Lost");
@@ -43,7 +49,7 @@ public class AppointmentHandler implements MqttCallback {
 
     /** Handles incoming pending requests **/
     // TODO: Placeholder topics, change when MQTT topics are finalized
-    private void handlePending(String payload){
+    public void handlePending(String payload){
         // Creates a json-parser that parses the payload to a Java object
         Gson parser = new Gson();
         Payload message = parser.fromJson(payload, Payload.class);
@@ -77,7 +83,7 @@ public class AppointmentHandler implements MqttCallback {
 
     /** Handles incoming cancel requests **/
     // TODO: Placeholder topics, change when MQTT topics are finalized
-    private void handleCancel(String payload){
+    public void handleCancel(String payload){
         // Creates a json-parser that parses the payload to a Java object
         Gson parser = new Gson();
         Payload message = parser.fromJson(payload, Payload.class);
@@ -109,7 +115,7 @@ public class AppointmentHandler implements MqttCallback {
 
     /** Handles incoming confirm requests **/
     // TODO: Placeholder topics, change when MQTT topics are finalized
-    private void handleConfirm(String payload){
+    public void handleConfirm(String payload){
         // Creates a json-parser that parses the payload to a Java object
         Gson parser = new Gson();
         Payload message = parser.fromJson(payload, Payload.class);
