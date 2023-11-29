@@ -29,6 +29,7 @@ public class AppointmentService {
         brokerClient.subscribe(Topic.SUBSCRIBE_PENDING.getStringValue(),0);
         brokerClient.subscribe(Topic.SUBSCRIBE_CANCEL.getStringValue(),0);
         brokerClient.subscribe(Topic.SUBSCRIBE_CONFIRM.getStringValue(), 0);
+        brokerClient.subscribe(Topic.SUBSCRIBE_AVAILABLE.getStringValue(), 0);
 
         // Creates an instance of the appointment handler and binds it to the callback
         brokerClient.setCallback(new AppointmentHandler(threadPool));

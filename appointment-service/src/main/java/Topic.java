@@ -4,6 +4,8 @@ public enum Topic {
     SUBSCRIBE_PENDING("flossboss/appointment/request/pending"),
     SUBSCRIBE_CANCEL("flossboss/appointment/request/cancel"),
     SUBSCRIBE_CONFIRM("flossboss/appointment/request/confirm"),
+    SUBSCRIBE_AVAILABLE("flossboss/appointment/request/confirm"),
+    PUBLISH_UPDATE_AVAILABLE("flossboss/appointment/update/available"),
     PUBLISH_UPDATE_PENDING("flossboss/appointment/update/pending"),
     PUBLISH_UPDATE_CANCEL("flossboss/appointment/update/cancel"),
     PUBLISH_UPDATE_CONFIRM("flossboss/appointment/update/confirm"),

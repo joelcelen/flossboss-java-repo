@@ -39,6 +39,9 @@ public class AppointmentHandler implements MqttCallback {
 
         }else if (topic.equals(Topic.SUBSCRIBE_CONFIRM.getStringValue())) { // confirm requests
             threadPool.submit(()-> handleConfirm(payload.toString()));
+
+        } else if (topic.equals(Topic.SUBSCRIBE_AVAILABLE.getStringValue())) { // availability requests
+            threadPool.submit(()->handleAvailable(payload.toString()));
         }
     }
 
@@ -139,6 +142,33 @@ public class AppointmentHandler implements MqttCallback {
                 String payloadMessage = String.format("Appointment with id: %s is not pending", id);
                 System.out.println(payloadMessage);
                 brokerClient.publish(Topic.PUBLISH_UPDATE_CONFIRM.getStringValue(), payloadMessage, 0);
+            }
+        }
+    }
+
+    /** Handles incoming availability requests **/
+    public void handleAvailable(String payload){
+        // Creates a json-parser that parses the payload to a Java object
+        Gson parser = new Gson();
+        Payload message = parser.fromJson(payload, Payload.class);
+
+        // Get necessary attributes from Payload
+        String id = message.getId();
+
+        synchronized (this) {
+            if (!databaseClient.isAvailable(id)) {
+                // Update appointment to booked state
+                databaseClient.updateBoolean(id, "isAvailable", true);
+
+                // Print operation in console and publish the JSON back
+                String payloadResponse = databaseClient.readItem(id).toJson();
+                String payloadMessage = String.format("Appointment with id: %s now available", id);
+                System.out.println(payloadMessage);
+                brokerClient.publish(Topic.PUBLISH_UPDATE_AVAILABLE.getStringValue(), payloadResponse, 0);
+            } else {
+                String payloadMessage = String.format("Appointment with id: %s is already available", id);
+                System.out.println(payloadMessage);
+                brokerClient.publish(Topic.PUBLISH_UPDATE_AVAILABLE.getStringValue(), payloadMessage, 0);
             }
         }
     }

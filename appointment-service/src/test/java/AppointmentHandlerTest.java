@@ -83,6 +83,18 @@ public class AppointmentHandlerTest {
         logger.error(TEST_MARKER, "ConfirmArrivedTest Succeeded!");
     }
 
+    /** Test for incoming message to subscribe/available topic **/
+    @Test
+    public void availableArrivedTest() {
+        logger.error(TEST_MARKER, "AvailableArrivedTest Running...");
+        // Simulate an incoming message on the SUBSCRIBE_AVAILABLE topic
+        appointmentHandler.messageArrived(Topic.SUBSCRIBE_AVAILABLE.getStringValue(), new MqttMessage(samplePayload.getBytes()));
+
+        // Verify that the thread pool submitted a task
+        verify(threadPoolMock, times(1)).submit(any(Runnable.class));
+        logger.error(TEST_MARKER, "AvailableArrivedTest Succeeded!");
+    }
+
     /** Test for incoming message to the wrong topic **/
     @Test
     public void wrongTopicTest() {
@@ -226,5 +238,45 @@ public class AppointmentHandlerTest {
         sequential.verify(databaseClientMock, never()).updateBoolean(anyString(), anyString(), anyBoolean());
         sequential.verify(brokerClientMock, times(1)).publish(anyString(), anyString(), anyInt());
         logger.error(TEST_MARKER, "ConfirmInvalidTest Succeeded!");
+    }
+
+    /** Validity test case for handleAvailable() method **/
+    @Test
+    public void availableValidTest() {
+        logger.error(TEST_MARKER, "AvailableValidTest Running...");
+        // Mock behavior for databaseClient.isPending calls
+        when(databaseClientMock.isAvailable(anyString())).thenReturn(false);
+
+        // Mock behavior for readItem to return a non-null Document
+        when(databaseClientMock.readItem(anyString())).thenReturn(new Document("someKey", "someValue"));
+
+        // Call the method to be tested
+        appointmentHandler.handleAvailable(samplePayload);
+
+        // Verify that the expected methods were called on the mocked objects
+        sequential.verify(databaseClientMock, times(1)).isAvailable(anyString());
+        sequential.verify(databaseClientMock, times(1)).updateBoolean(anyString(), anyString(), anyBoolean());
+        sequential.verify(brokerClientMock, times(1)).publish(anyString(), anyString(), anyInt());
+        logger.error(TEST_MARKER, "AvailableValidTest Succeeded!");
+    }
+
+    /** Invalidity test case for handleAvailable() method **/
+    @Test
+    public void availableInvalidTest() {
+        logger.error(TEST_MARKER, "AvailableInvalidTest Running...");
+        // Mock behavior for databaseClient.isPending calls
+        when(databaseClientMock.isAvailable(anyString())).thenReturn(true);
+
+        // Mock behavior for readItem to return a non-null Document
+        when(databaseClientMock.readItem(anyString())).thenReturn(new Document("someKey", "someValue"));
+
+        // Call the method to be tested
+        appointmentHandler.handleAvailable(samplePayload);
+
+        // Verify that the expected methods were called on the mocked objects
+        sequential.verify(databaseClientMock, times(1)).isAvailable(anyString());
+        sequential.verify(databaseClientMock, never()).updateBoolean(anyString(), anyString(), anyBoolean());
+        sequential.verify(brokerClientMock, times(1)).publish(anyString(), anyString(), anyInt());
+        logger.error(TEST_MARKER, "AvailableInvalidTest Succeeded!");
     }
 }
