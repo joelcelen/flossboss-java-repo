@@ -28,8 +28,10 @@ public class PendingQueueTest {
 
     @After
     public void tearDown(){
-        reset(this.databaseClientMock, this.brokerClientMock);
-        mockPendingQueue.resetState();
+        this.mockPendingQueue = null;
+        this.sequential = null;
+        this.databaseClientMock.disconnect();
+        this.brokerClientMock.disconnect();
     }
 
     @Test

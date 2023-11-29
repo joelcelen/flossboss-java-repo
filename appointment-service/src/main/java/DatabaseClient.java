@@ -56,7 +56,10 @@ public class DatabaseClient {
 
     /** Disconnect method  **/
     public void disconnect(){
-        this.mongoClient.close();
+        if(instance != null) {
+            this.mongoClient.close();
+            instance = null;
+        }
     }
 
     /** Set the collection that you currently want to operate on **/
@@ -170,21 +173,25 @@ public class DatabaseClient {
 
     /** Helper method to load in the environmentals from the .txt file **/
     private void loadURI() {
-
         String path = "atlasconfig.txt";
 
-        try (
-                InputStream inputStream = BrokerClient.class.getClassLoader().getResourceAsStream(path)) {
+        try (InputStream inputStream = BrokerClient.class.getClassLoader().getResourceAsStream(path)) {
             if (inputStream == null) {
-                System.out.println("Cannot find "+path+" in classpath");
-            }
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-            String[] configLines = reader.lines().collect(Collectors.joining("\n")).split("\n");
+                System.out.println("Cannot find " + path + " in classpath. Reading URI from environment variables.");
 
-            // These need to be in the correct order in the txt file.
-            this.uri = configLines[0].trim();
+                // Read URI from environment variables
+                this.uri = System.getenv("ATLAS_TEST_URI");
+            } else {
+                // Read URI from the file
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+                String[] configLines = reader.lines().collect(Collectors.joining("\n")).split("\n");
+
+                // These need to be in the correct order in the txt file.
+                this.uri = configLines[0].trim();
+            }
         } catch (IOException e) {
             System.out.println("Error configuring MongoDB client: " + e.getMessage());
         }
     }
+
 }

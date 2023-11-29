@@ -4,6 +4,7 @@ import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 import org.bson.Document;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
@@ -36,6 +37,14 @@ public class AppointmentHandlerTest {
 
         // InOrder object to run method calls sequential
         this.sequential = inOrder(pendingQueueMock, brokerClientMock, databaseClientMock);
+    }
+
+    @After
+    public void tearDown(){
+        this.databaseClientMock.disconnect();
+        this.brokerClientMock.disconnect();
+        this.pendingQueueMock.resetState();
+        this.appointmentHandler = null;
     }
 
     /** Test for incoming message to subscribe/pending topic **/
