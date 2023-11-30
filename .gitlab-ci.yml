@@ -21,3 +21,7 @@ trigger_dentist:
   stage: triggers
   trigger:
     include: dentist-service/.gitlab-ci.yml
+trigger_timeslot:
+  stage: triggers
+  trigger:
+    include: timeslot-service/.gitlab-ci.yml
