@@ -114,6 +114,17 @@ public class DatabaseClient {
         return result.iterator().hasNext();
     }
 
+    /** Find item in DB based on field in parameter, if item found it returns ture, else it returns false **/
+    public boolean existItemByField(String field, String value) {
+        FindIterable<Document> result = collection.find(eq(field, value));
+        return result.iterator().hasNext();
+    }
+
+    /** Find item in DB based on ID, return the DB item */
+    public Document findItemByID(String id) {
+        return collection.find(eq("_id",id)).first();
+    }
+
     /** Find item in DB based on email */
     public Document findItemByEmail(String email) {
         return collection.find(eq("email",email)).first();
@@ -130,6 +141,24 @@ public class DatabaseClient {
         }
 
         return id;
+    }
+
+    /** Add dentists to clinic list of dentist */
+    public void addDentistToClinic(DatabaseClient databaseClient, String clinicId, String dentistId) {
+        // Update the clinic document to add the dentistId
+        UpdateResult result = collection.updateOne(
+                Filters.eq("_id", new ObjectId(clinicId)),
+                Updates.push("dentists", dentistId)
+        );
+
+        // Check if the update was successful
+        if (result.wasAcknowledged() && result.getMatchedCount() > 0) {
+            System.out.println("Dentist added to clinic successfully.");
+        } else if (result.getMatchedCount() == 0) {
+            System.out.println("Clinic not found.");
+        } else {
+            System.out.println("Failed to add dentist to clinic.");
+        }
     }
 
     /** Helper method to load in the environmentals from the .txt file **/
