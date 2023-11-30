@@ -14,23 +14,38 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
 import java.util.stream.Collectors;
 
 public class DatabaseClient {
-
+    private static DatabaseClient instance;
     private String uri;
     private MongoClient mongoClient;
     private MongoDatabase database;
     private MongoCollection<Document> collection;
 
     /** Constructor that uses URI specified in environmental file **/
-    public DatabaseClient(){
+    private DatabaseClient(){
         this.loadURI();
     }
 
     /** Constructor that takes specific URI as an argument and connects to it **/
-    public DatabaseClient(String uri){
+    private DatabaseClient(String uri){
         this.uri = uri;
+    }
+
+    public static DatabaseClient getInstance(){
+        if(instance == null){
+            instance = new DatabaseClient();
+        }
+        return instance;
+    }
+
+    public static DatabaseClient getInstance(String uri){
+        if(instance == null){
+            instance = new DatabaseClient(uri);
+        }
+        return instance;
     }
 
     /** Creates the MongoClient and takes a specific DB within your cluster **/
@@ -41,7 +56,10 @@ public class DatabaseClient {
 
     /** Disconnect method  **/
     public void disconnect(){
-        this.mongoClient.close();
+        if(instance != null) {
+            this.mongoClient.close();
+            instance = null;
+        }
     }
 
     /** Set the collection that you currently want to operate on **/
@@ -60,28 +78,54 @@ public class DatabaseClient {
         }
     }
 
-    /** Reads an item based on the item's ID and returns it as JSON**/
-    public String readItem(String id) {
+    /** Reads an item based on the item's ID and returns it as a bson Document**/
+    public Document readItem(String id) {
 
-        String query;
         if(existsItem(id)){
-            Document item = collection.find(eq("_id", new ObjectId(id))).first();
-            query = item.toJson();
+            return collection.find(eq("_id", new ObjectId(id))).first();
         }else{
-            query = "No item with specified ID found";
+            System.out.println("Item does not exist");
+            return null;
         }
-
-        return query;
     }
 
-    /** Updates a single row of an item to your specified value **/
-    public void updateItem(String id, String attribute, String newValue){
+    /** Checks if attribute isAvailable is true or false in a specific appointment  **/
+    public boolean isAvailable(String id){
+        Document appointment = collection.find(eq("_id", new ObjectId(id))).first();
+        return appointment.getBoolean("isAvailable");
+    }
+
+    /** Checks if attribute isPending true or false in a specific appointment **/
+    public boolean isPending(String id){
+        Document appointment = collection.find(eq("_id", new ObjectId(id))).first();
+        return appointment.getBoolean("isPending");
+    }
+
+    /** Checks if attribute isBooked is true or false in a specific appointment **/
+    public boolean isBooked(String id){
+        Document appointment = collection.find(eq("_id", new ObjectId(id))).first();
+        return appointment.getBoolean("isBooked");
+    }
+
+    /** Updates a boolean-based attribute **/
+    public void updateBoolean(String id, String attribute, boolean newValue){
 
         if(this.existsItem(id)){
             UpdateResult result = collection.updateOne(Filters.eq("_id", new ObjectId(id)), Updates.set(attribute,newValue));
-            if(result.wasAcknowledged()){
-                System.out.println("Item successfully updated!");
-            }else{
+            if(!result.wasAcknowledged()){
+                System.out.println("Item was not updated.");
+            }
+        }else{
+            System.out.println("Item not found.");
+        }
+    }
+
+    /** Updates a String-based attribute **/
+    public void updateString(String id, String attribute, String newValue){
+
+        if(this.existsItem(id)){
+            UpdateResult result = collection.updateOne(Filters.eq("_id", new ObjectId(id)), Updates.set(attribute,newValue));
+            if(!result.wasAcknowledged()){
                 System.out.println("Item was not updated.");
             }
         }else{
@@ -96,24 +140,25 @@ public class DatabaseClient {
             if(result.wasAcknowledged()){
                 System.out.println("Item successfully deleted!");
             }else{
-                System.out.println("Item was no deleted.");
+                System.out.println("Item was not deleted.");
             }
         }else{
             System.out.println("No matching document found.");
         }
     }
 
-    /** Find item in DB based on ID, if item found it returns ture, else it returns false **/
+    /** Find item in DB based on ID, if item found it returns true, else it returns false **/
     public boolean existsItem(String id) {
+        FindIterable<Document> result = collection.find(eq("_id", new ObjectId(id)));
 
-        FindIterable<Document> result = collection.find(eq("_id", new ObjectId(id))
-        );
+        // Use the iterator() method to check if there are any results
+        Iterator<Document> iterator = result.iterator();
 
-        // Check if any documents match the query
-        return result.iterator().hasNext();
+        // Returns true if there is at least one matching document
+        return iterator.hasNext();
     }
 
-    /** Gets the auto generated ID based on name **/
+    /** Gets the auto generated ID based on name of the service, for the testing class **/
     public String getID(String name){
         String id;
         Document query = collection.find(eq("service_name", name)).first();
@@ -128,21 +173,25 @@ public class DatabaseClient {
 
     /** Helper method to load in the environmentals from the .txt file **/
     private void loadURI() {
-
         String path = "atlasconfig.txt";
 
-        try (
-                InputStream inputStream = BrokerClient.class.getClassLoader().getResourceAsStream(path)) {
+        try (InputStream inputStream = BrokerClient.class.getClassLoader().getResourceAsStream(path)) {
             if (inputStream == null) {
-                System.out.println("Cannot find "+path+" in classpath");
-            }
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-            String[] configLines = reader.lines().collect(Collectors.joining("\n")).split("\n");
+                System.out.println("Cannot find " + path + " in classpath. Reading URI from environment variables.");
 
-            // These need to be in the correct order in the txt file.
-            this.uri = configLines[0].trim();
+                // Read URI from environment variables
+                this.uri = System.getenv("ATLAS_TEST_URI");
+            } else {
+                // Read URI from the file
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+                String[] configLines = reader.lines().collect(Collectors.joining("\n")).split("\n");
+
+                // These need to be in the correct order in the txt file.
+                this.uri = configLines[0].trim();
+            }
         } catch (IOException e) {
             System.out.println("Error configuring MongoDB client: " + e.getMessage());
         }
     }
+
 }

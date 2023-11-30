@@ -8,14 +8,22 @@ import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
 public class BrokerClient {
+    private static BrokerClient instance;
     private MqttClient client;
     private String clientName;
     private String hiveUrl;
     private String hiveUser;
     private char[] hivePw;
 
-    public BrokerClient(){
+    private BrokerClient(){
         this.getVariables();
+    }
+
+    public static BrokerClient getInstance(){
+        if (instance == null){
+            instance =  new BrokerClient();
+        }
+        return instance;
     }
 
     // Connection using the config file.
@@ -40,7 +48,6 @@ public class BrokerClient {
             MqttMessage message = new MqttMessage(content.getBytes());
             message.setQos(qos);
             this.client.publish(topic, message);
-            System.out.println("Message published");
         } catch(MqttException me) {
             handleMqttException(me);
         }
@@ -59,8 +66,11 @@ public class BrokerClient {
     // Disconnect method
     public void disconnect(){
         try {
-            this.client.disconnect();
-            System.out.println("Disconnected");
+            if(instance != null) {
+                this.client.disconnect();
+                System.out.println("Disconnected");
+                instance = null;
+            }
         } catch(MqttException me) {
             handleMqttException(me);
         }
@@ -83,22 +93,28 @@ public class BrokerClient {
 
     // Helper method to get the environmental variables from a txt file
     private void getVariables() {
-
         String path = "hiveconfig.txt";
 
-        try (
-                InputStream inputStream = BrokerClient.class.getClassLoader().getResourceAsStream(path)) {
+        try (InputStream inputStream = BrokerClient.class.getClassLoader().getResourceAsStream(path)) {
             if (inputStream == null) {
-                System.out.println("Cannot find "+path+" in classpath");
-            }
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-            String[] configLines = reader.lines().collect(Collectors.joining("\n")).split("\n");
+                System.out.println("Cannot find " + path + " in classpath. Reading variables from GitLab.");
 
-            // These need to be in the correct order in the txt file.
-            this.clientName = configLines[0].trim();
-            this.hiveUrl = configLines[1].trim();
-            this.hiveUser = configLines[2].trim();
-            this.hivePw = configLines[3].trim().toCharArray();
+                // Read variables from GitLab environment variables
+                this.clientName = System.getenv("HIVE_CLIENT_NAME");
+                this.hiveUrl = System.getenv("HIVE_URL");
+                this.hiveUser = System.getenv("HIVE_USER");
+                this.hivePw = System.getenv("HIVE_PW").toCharArray();
+            } else {
+                // Read variables from the file
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+                String[] configLines = reader.lines().collect(Collectors.joining("\n")).split("\n");
+
+                // These need to be in the correct order in the txt file.
+                this.clientName = configLines[0].trim();
+                this.hiveUrl = configLines[1].trim();
+                this.hiveUser = configLines[2].trim();
+                this.hivePw = configLines[3].trim().toCharArray();
+            }
         } catch (IOException e) {
             System.out.println("Error configuring MQTT client: " + e.getMessage());
         }
