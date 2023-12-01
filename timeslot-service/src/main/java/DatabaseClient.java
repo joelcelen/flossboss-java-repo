@@ -4,9 +4,11 @@ import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.io.BufferedReader;
@@ -14,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class DatabaseClient {
@@ -77,6 +80,15 @@ public class DatabaseClient {
         }
     }
 
+    public void insertMany(List<Document> itemList){
+        InsertManyResult result = this.collection.insertMany(itemList);
+        if(result.wasAcknowledged()){
+            System.out.println("Appointments successfully inserted!");
+        }else{
+            System.out.println("Insertion of appointments failed.");
+        }
+    }
+
     /** Reads an item based on the item's ID and returns it as JSON**/
     public String readItem(String id) {
 
@@ -117,6 +129,16 @@ public class DatabaseClient {
             }
         }else{
             System.out.println("No matching document found.");
+        }
+    }
+
+    /** Deletes many appointments based on some specific filter **/
+    public void deleteMany(Bson filter){
+        DeleteResult result = collection.deleteMany(filter);
+        if (result.wasAcknowledged()){
+            System.out.println("Successful clean-up!");
+        }else{
+            System.out.println("Failed to clean database");
         }
     }
 

@@ -9,21 +9,19 @@ public class TimeslotService {
         BrokerClient brokerClient = BrokerClient.getInstance();
         brokerClient.connect();
 
+        TimeslotCreator timeslotCreator = new TimeslotCreator();
+
         // Create Database Client with placeholder URI, testing db so no need to mask
-        DatabaseClient databaseClient = DatabaseClient.getInstance("mongodb+srv://flossboss-test:vaSEAvtHSumlixAv@test-cluster.wlvtb6y.mongodb.net/?retryWrites=true&w=majority");
+        DatabaseClient databaseClient = DatabaseClient.getInstance();
 
         // Connect to the specific DB within the cluster
-        databaseClient.connect("services-db");
+        databaseClient.connect("test");
 
         // Set the collection on which you want to operate on
-        databaseClient.setCollection("services");
+        databaseClient.setCollection("timeslot-testing");
 
-        // Get specific test item, placeholder
-        String service = databaseClient.getID("TimeslotService");
-        System.out.println(databaseClient.readItem(service));
-
-        // Publish payload to topic, placeholder
-        brokerClient.publish("flossboss/test/publish", "I'm the TimeslotService", 0);
+        // Create timeslots for one dentist in the Hovås Dental Clinic
+        timeslotCreator.createAppointments("655cb0c8596ef74251a5cc3d", "65686817678d11680fafdb5c");
 
         // Subscribe to topic, placeholder
         brokerClient.subscribe("flossboss/test/subscribe",0);
