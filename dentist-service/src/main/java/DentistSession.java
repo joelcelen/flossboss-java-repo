@@ -46,6 +46,7 @@ public class DentistSession {
         }
     }
 
+    /** Handle authentication of a dentist in the database */
     public void handleLogin(JSONObject loginRequest, BrokerClient brokerClient, DatabaseClient databaseClient) {
         String password = loginRequest.getString("password");
         String clinicId = loginRequest.getString("clinicId");
@@ -135,6 +136,14 @@ public class DentistSession {
         brokerClient.publish(sendAppointmentsTopic, payload, 0);
     }
 
+    /** Extract payload and publish appointments */
+    public void handleAppointments(JSONObject requestAppointments,BrokerClient brokerClient, DatabaseClient databaseClient ) {
+        boolean message = requestAppointments.getBoolean("getAppointments");
+        if (message) {
+            publishAppointments(brokerClient, databaseClient);
+        }
+    }
+
     /** Subscribe to personal dentist topics that need email*/
     private void afterAuthenticatedSubscriptions(BrokerClient brokerClient) {
         if (email!=null || email.isEmpty()) {
@@ -145,6 +154,7 @@ public class DentistSession {
             System.out.println("Email is not set. Cannot subscribe to specific dentist topics");
         }
     }
+
 
 }
 

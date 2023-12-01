@@ -115,17 +115,6 @@ public class DatabaseClient {
         return result.iterator().hasNext();
     }
 
-    /** Find item in DB based on field in parameter, if item found it returns ture, else it returns false **/
-    public boolean existItemByField(String field, String value) {
-        FindIterable<Document> result = collection.find(eq(field, value));
-        return result.iterator().hasNext();
-    }
-
-    /** Find item in DB based on ID, return the DB item */
-    public Document findItemByID(String id) {
-        return collection.find(eq("_id",id)).first();
-    }
-
     /** Find item in DB based on email */
     public Document findItemByEmail(String email) {
         return collection.find(eq("email",email)).first();

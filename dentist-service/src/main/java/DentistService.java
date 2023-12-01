@@ -1,17 +1,9 @@
-import com.mongodb.client.result.UpdateResult;
-import org.bson.Document;
-import org.bson.json.JsonObject;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.json.JSONArray;
 import org.json.JSONObject;
-
-import javax.xml.crypto.Data;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 public class DentistService {
 
@@ -57,9 +49,9 @@ public class DentistService {
             public void messageArrived(String topic, MqttMessage mqttMessage){
                 // Put mqtt callback in its own thread using runnable so that it is continuously listening for messages.
                 Runnable mqtt = () -> {
-                    JSONObject message = new JSONObject(new String(mqttMessage.getPayload()));
-
                     if (topic.equals(REGISTER_REQUEST_TOPIC) || topic.equals(LOGIN_REQUEST_TOPIC)) {
+                        // Parse payload into json object
+                        JSONObject message = new JSONObject(new String(mqttMessage.getPayload()));
                         // For register and login request, email is included in the message (payload)
                         String email = message.getString("email");
                         /** computeIfAbsent is a method provided by the ConcurrentHashMap
@@ -78,7 +70,8 @@ public class DentistService {
                         String email = topic.substring("flossboss/dentist/request/appointments/".length());
                         DentistSession dentistSession = sessions.get(email);
                         if(dentistSession != null) {
-                            dentistSession.publishAppointments(brokerClient, databaseClient);
+                            JSONObject message = new JSONObject(new String(mqttMessage.getPayload()));
+                            dentistSession.handleAppointments(message, brokerClient, databaseClient);
                         }
                     }
                 };
