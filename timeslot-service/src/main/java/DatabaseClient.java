@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -90,17 +91,29 @@ public class DatabaseClient {
     }
 
     /** Reads an item based on the item's ID and returns it as JSON**/
-    public String readItem(String id) {
-
-        String query;
+    public Document readItem(String id) {
+        Document query;
         if(existsItem(id)){
-            Document item = collection.find(eq("_id", new ObjectId(id))).first();
-            query = item.toJson();
+            query = collection.find(eq("_id", new ObjectId(id))).first();
         }else{
-            query = "No item with specified ID found";
+            query = null;
         }
 
         return query;
+    }
+
+    /** Reads many documents in the current collection and returns them as a list. **/
+    public List<Document> readMany() {
+
+        FindIterable<Document> documents = collection.find();
+
+        try (MongoCursor<Document> cursor = documents.iterator()) {
+            List<Document> entries = new ArrayList<>();
+            while (cursor.hasNext()) {
+                entries.add(cursor.next());
+            }
+            return entries;
+        }
     }
 
     /** Updates a single row of an item to your specified value **/
