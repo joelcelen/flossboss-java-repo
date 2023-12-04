@@ -11,6 +11,7 @@ public class ClinicHandler {
     }
 
     public List<Clinic> retrieveAllClinics(){
+        databaseClient.setCollection(DatabaseCollection.CLINICS.getStringValue());
         List<Clinic> clinicList = new ArrayList<>();
         List<Document> documentList = this.databaseClient.readMany();
         Gson parser = new Gson();
@@ -20,14 +21,17 @@ public class ClinicHandler {
             Clinic clinicEntry = parser.fromJson(clinicJson, Clinic.class);
             clinicList.add(clinicEntry);
         }
+        databaseClient.setCollection(DatabaseCollection.TIMESLOTS.getStringValue());
         return clinicList;
     }
 
     public Clinic retrieveClinic(String clinicId){
+        databaseClient.setCollection(DatabaseCollection.CLINICS.getStringValue());
         Document clinicDoc = this.databaseClient.readItem(clinicId);
         String jsonClinic = clinicDoc.toJson();
         Gson parser = new Gson();
         Clinic clinic = parser.fromJson(jsonClinic, Clinic.class);
+        databaseClient.setCollection(DatabaseCollection.TIMESLOTS.getStringValue());
         return clinic;
     }
 }

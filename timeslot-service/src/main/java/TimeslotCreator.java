@@ -14,15 +14,65 @@ public class TimeslotCreator {
     private final DateTimeFormatter dateFormatter;
     private final DateTimeFormatter timeFormatter;
     private DatabaseClient databaseClient;
+    private ClinicHandler clinicHandler;
 
 
     public TimeslotCreator(){
         this.dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         this.timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
         this.databaseClient = DatabaseClient.getInstance();
+        this.clinicHandler = new ClinicHandler();
     }
 
-    public void removePastAppointments(){
+    /** Generates timeslots for a single dentist in a specified clinic **/
+    public void generateDentist(String clinicId, String dentistId){
+        removePastTimeslots();
+
+        Clinic clinic = clinicHandler.retrieveClinic(clinicId);
+
+        if(clinic != null) {
+            List<String> dentistList = clinic.getDentists();
+
+            for (String dentist : dentistList) {
+                if (dentist.equals(dentistId)) {
+                    this.createTimeslots(clinic.getId().get$oid(), dentist);
+                }
+            }
+        }
+    }
+
+    /** Generates timeslots for all dentists in a specified clinic **/
+    public void generateClinic(String clinicId){
+        removePastTimeslots();
+
+        Clinic clinic = clinicHandler.retrieveClinic(clinicId);
+
+        if(clinic != null) {
+            List<String> dentistList = clinic.getDentists();
+
+            for (String dentist : dentistList) {
+                this.createTimeslots(clinic.getId().get$oid(), dentist);
+            }
+        }
+    }
+
+    /** Generates timeslots for all dentists in all clinics in the database **/
+    public void generateAll(){
+        removePastTimeslots();
+        List<Clinic> clinicList = clinicHandler.retrieveAllClinics();
+
+        for (Clinic clinic : clinicList){
+            String clinicId = clinic.getId().get$oid();
+            List<String> dentistList = clinic.getDentists();
+
+            for (String dentist : dentistList){
+                this.createTimeslots(clinicId, dentist);
+            }
+        }
+    }
+
+    /** Removes all timeslots from the database that has a past date **/
+    public void removePastTimeslots(){
         LocalDate currentDate = LocalDate.now();
         Bson filter = Filters.lt("date", currentDate);
         databaseClient.deleteMany(filter);
@@ -30,10 +80,9 @@ public class TimeslotCreator {
 
 
     /** Creates timeslots for a specific clinic and dentist **/
+    private void createTimeslots(String clinic, String dentist){
 
-    public void createAppointments(String clinic, String dentist){
-
-        List<Document> appointmentList = new ArrayList<>();
+        List<Document> timeslots = new ArrayList<>();
         long timerStart = System.currentTimeMillis();
         long daysToAdd = daysToAdd();
 
@@ -55,24 +104,24 @@ public class TimeslotCreator {
                             .append("isAvailable", true)
                             .append("isPending", false)
                             .append("isBooked", false);
-                    appointmentList.add(tempDoc);
+                    timeslots.add(tempDoc);
                     startTime = startTime.plusHours(1);
                     endTime = endTime.plusHours(1);
                 }
             }
             startDate = startDate.plusDays(1);
         }
-        System.out.println("Appointments created.");
+        System.out.println("Timeslots created.");
 
         long elapsedTime = System.currentTimeMillis() - timerStart;
         System.out.println("Elapsed Time: " + elapsedTime + " milliseconds");
 
-        databaseClient.insertMany(appointmentList);
+        databaseClient.insertMany(timeslots);
 
     }
 
-
-    public long daysToAdd(){
+    /** Calculates the number of days that timeslots should be added for **/
+    private long daysToAdd(){
         LocalDate currentDay = LocalDate.now();
         LocalDate lastDayOfMonth = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
         long difference = ChronoUnit.DAYS.between(currentDay,lastDayOfMonth) + 1;
