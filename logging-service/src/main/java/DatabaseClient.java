@@ -17,22 +17,34 @@ import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
 public class DatabaseClient {
-
+    private static DatabaseClient instance;
     private String uri;
     private MongoClient mongoClient;
     private MongoDatabase database;
     private MongoCollection<Document> collection;
 
-    /** Constructor that uses URI specified in environmental file **/
-    public DatabaseClient(){
+    /** Constructor that uses URI specified in environmental file */
+    private DatabaseClient(){
         this.loadURI();
     }
 
-    /** Constructor that takes specific URI as an argument and connects to it **/
-    public DatabaseClient(String uri){
+    /** Constructor that takes specific URI as an argument and connects to it */
+    private DatabaseClient(String uri){
         this.uri = uri;
     }
 
+    public static DatabaseClient getInstance(){
+        if(instance == null){
+            instance = new DatabaseClient();
+        }
+        return instance;
+    }
+    public static DatabaseClient getInstance(String uri){
+        if(instance == null){
+            instance = new DatabaseClient(uri);
+        }
+        return instance;
+    }
     /** Creates the MongoClient and takes a specific DB within your cluster **/
     public void connect(String db){
         this.mongoClient = MongoClients.create(uri);
@@ -41,7 +53,10 @@ public class DatabaseClient {
 
     /** Disconnect method  **/
     public void disconnect(){
-        this.mongoClient.close();
+        if (instance != null) {
+            this.mongoClient.close();
+            instance = null;
+        }
     }
 
     /** Set the collection that you currently want to operate on **/
@@ -128,19 +143,22 @@ public class DatabaseClient {
 
     /** Helper method to load in the environmentals from the .txt file **/
     private void loadURI() {
-
         String path = "atlasconfig.txt";
 
-        try (
-                InputStream inputStream = BrokerClient.class.getClassLoader().getResourceAsStream(path)) {
+        try (InputStream inputStream = BrokerClient.class.getClassLoader().getResourceAsStream(path)) {
             if (inputStream == null) {
-                System.out.println("Cannot find "+path+" in classpath");
-            }
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-            String[] configLines = reader.lines().collect(Collectors.joining("\n")).split("\n");
+                System.out.println("Cannot find " + path + " in classpath. Reading URI from environment variables.");
 
-            // These need to be in the correct order in the txt file.
-            this.uri = configLines[0].trim();
+                // Read URI from environment variables
+                this.uri = System.getenv("ATLAS_TEST_URI");
+            } else {
+                // Read URI from the file
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+                String[] configLines = reader.lines().collect(Collectors.joining("\n")).split("\n");
+
+                // These need to be in the correct order in the txt file.
+                this.uri = configLines[0].trim();
+            }
         } catch (IOException e) {
             System.out.println("Error configuring MongoDB client: " + e.getMessage());
         }
