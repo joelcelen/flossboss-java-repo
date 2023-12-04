@@ -165,6 +165,13 @@ public class DatabaseClient {
         return result.iterator().hasNext();
     }
 
+    public boolean existsItemByValue(String attributeName, Object attributeValue) {
+        Document query = new Document(attributeName, attributeValue);
+
+        // Check if there is at least one matching document
+        return collection.find(query).iterator().hasNext();
+    }
+
     /** Gets the auto generated ID based on name **/
     public String getID(String name){
         String id;
