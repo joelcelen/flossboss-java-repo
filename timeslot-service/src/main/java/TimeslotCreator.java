@@ -24,9 +24,10 @@ public class TimeslotCreator {
         this.clinicHandler = new ClinicHandler();
     }
 
+    //TODO: Prevent creation of timeslots if dentist already has timeslots.
     /** Generates timeslots for a single dentist in a specified clinic **/
     public void generateDentist(String clinicId, String dentistId){
-        removePastTimeslots();
+        cleanupTimeslots();
 
         Clinic clinic = clinicHandler.retrieveClinic(clinicId);
 
@@ -41,9 +42,10 @@ public class TimeslotCreator {
         }
     }
 
+    // TODO: Prevent creation of timeslots if clinic already has appointments.
     /** Generates timeslots for all dentists in a specified clinic **/
     public void generateClinic(String clinicId){
-        removePastTimeslots();
+        cleanupTimeslots();
 
         Clinic clinic = clinicHandler.retrieveClinic(clinicId);
 
@@ -56,9 +58,10 @@ public class TimeslotCreator {
         }
     }
 
+    //TODO: Prevent creation of identical timeslots.
     /** Generates timeslots for all dentists in all clinics in the database **/
     public void generateAll(){
-        removePastTimeslots();
+        cleanupTimeslots();
         List<Clinic> clinicList = clinicHandler.retrieveAllClinics();
 
         for (Clinic clinic : clinicList){
@@ -72,13 +75,13 @@ public class TimeslotCreator {
     }
 
     /** Removes all timeslots from the database that has a past date **/
-    public void removePastTimeslots(){
+    public void cleanupTimeslots(){
         LocalDate currentDate = LocalDate.now();
         Bson filter = Filters.lt("date", currentDate);
         databaseClient.deleteMany(filter);
     }
 
-
+    // TODO: Try to return as a List instead and add in methods for less database insertions.
     /** Creates timeslots for a specific clinic and dentist **/
     private void createTimeslots(String clinic, String dentist){
 
@@ -120,6 +123,7 @@ public class TimeslotCreator {
 
     }
 
+    //TODO: Add handling for an empty list, if only one month exists or if both months exist.
     /** Calculates the number of days that timeslots should be added for **/
     private long daysToAdd(){
         LocalDate currentDay = LocalDate.now();
