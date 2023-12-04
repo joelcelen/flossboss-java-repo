@@ -1,3 +1,4 @@
+import com.google.gson.Gson;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -35,16 +36,34 @@ public class TimeslotService {
                         System.out.println("Connection Lost");
                     }
 
-                    // TODO: Add payload class and handler to parse the payloads.
                     @Override
-                    public void messageArrived(String topic, MqttMessage mqttMessage) {
+                    public void messageArrived(String topic, MqttMessage payload) {
                         if(topic.equals(Topic.CLEANUP.getStringValue())){
+                            // Takes any payload
                             timeslotCreator.cleanupTimeslots();
-                        } else if (topic.equals(Topic.CLINIC.getStringValue())) { // placeholder id
-                            timeslotCreator.generateClinic("656b98cdd6ac46835c9ee97d");
-                        } else if (topic.equals(Topic.DENTIST.getStringValue())) { // placeholder ids
-                            timeslotCreator.generateDentist("656b98cdd6ac46835c9ee97d", "65686817678d11680fafdb5c");
+                        } else if (topic.equals(Topic.CLINIC.getStringValue())) {
+                            // Creates a json-parser that parses the payload to a Java object
+                            Gson parser = new Gson();
+                            Payload message = parser.fromJson(payload.toString(), Payload.class);
+
+                            // Get necessary attributes from Payload
+                            String clinicId = message.getClinicId();
+
+                            timeslotCreator.generateClinic(clinicId);
+
+                        } else if (topic.equals(Topic.DENTIST.getStringValue())) {
+                            // Creates a json-parser that parses the payload to a Java object
+                            Gson parser = new Gson();
+                            Payload message = parser.fromJson(payload.toString(), Payload.class);
+
+                            // Get necessary attributes from Payload
+                            String clinicId = message.getClinicId();
+                            String dentistId = message.getDentistId();
+
+                            timeslotCreator.generateDentist(clinicId, dentistId);
+
                         } else if (topic.equals(Topic.ALL.getStringValue())) {
+                            // Takes any payload
                             timeslotCreator.generateAll();
                         }
                     }
