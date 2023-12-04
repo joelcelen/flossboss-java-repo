@@ -2,6 +2,7 @@ import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import java.time.DayOfWeek;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -42,7 +43,7 @@ public class TimeslotCreator {
 
                 for (String dentist : dentistList) {
                     if (dentist.equals(dentistId)) {
-                        this.createTimeslots(clinic.getId().get$oid(), dentist, LocalDate.now(), timeslots);
+                        this.createTimeslots(clinic, dentist, LocalDate.now(), timeslots);
                     }
                 }
             }
@@ -73,7 +74,7 @@ public class TimeslotCreator {
                 List<String> dentistList = clinic.getDentists();
 
                 for (String dentist : dentistList) {
-                    this.createTimeslots(clinic.getId().get$oid(), dentist, LocalDate.now(), timeslots);
+                    this.createTimeslots(clinic, dentist, LocalDate.now(), timeslots);
                 }
             }
             // Insert the timeslots generated into the database and print the time it took in ms
@@ -95,11 +96,10 @@ public class TimeslotCreator {
         if(startDate != null) {
             long timerStart = System.currentTimeMillis();
             for (Clinic clinic : clinicList) {
-                String clinicId = clinic.getId().get$oid();
                 List<String> dentistList = clinic.getDentists();
 
                 for (String dentist : dentistList) {
-                    this.createTimeslots(clinicId, dentist, startDate, timeslots);
+                    this.createTimeslots(clinic, dentist, startDate, timeslots);
                 }
             }
             // Insert the timeslots generated into the database and print the time it took in ms
@@ -118,21 +118,21 @@ public class TimeslotCreator {
         databaseClient.deleteMany(filter);
     }
 
-    // TODO: Try to return as a List instead and add in methods for less database insertions.
     /** Creates timeslots for a specific clinic and dentist **/
-    private List<Document> createTimeslots(String clinic, String dentist, LocalDate startDate, List<Document> timeslots){
+    private void createTimeslots(Clinic clinic, String dentist, LocalDate startDate, List<Document> timeslots){
 
         long daysToAdd = daysToAdd(startDate);
 
-            LocalDate endDate = startDate.plusDays(daysToAdd);
+        LocalDate endDate = startDate.plusDays(daysToAdd);
+        int numberOfSlots = calculateTimeslots(clinic.getOpenFrom(), clinic.getOpenTo());
 
             while (startDate.isBefore(endDate)) {
                 if (!(startDate.getDayOfWeek() == DayOfWeek.SATURDAY || startDate.getDayOfWeek() == DayOfWeek.SUNDAY)) {
-                    LocalTime startTime = LocalTime.of(9, 0);
-                    LocalTime endTime = LocalTime.of(9, 45);
-                    for (int i = 0; i < 8; i++) { // Add number of timeslots
+                    LocalTime startTime = LocalTime.parse(clinic.getOpenFrom(), this.timeFormatter);
+                    LocalTime endTime = startTime.plusMinutes(45);
+                    for (int i = 0; i < numberOfSlots; i++) { // Add number of timeslots
                         Document timeslot = new Document()
-                                .append("_clinicId", clinic)
+                                .append("_clinicId", clinic.getId().get$oid())
                                 .append("_dentistId", dentist)
                                 .append("_userId", "none")
                                 .append("date", startDate)
@@ -148,7 +148,6 @@ public class TimeslotCreator {
                 }
                 startDate = startDate.plusDays(1);
             }
-            return timeslots;
     }
 
     /** Calculates the number of days that timeslots should be added for **/
@@ -183,5 +182,16 @@ public class TimeslotCreator {
             // if the database is empty, return today's date
             return LocalDate.now();
         }
+    }
+
+    /** Calculates the amount of possible timeslots for a clinic based on opening hours **/
+    public int calculateTimeslots(String openFrom, String openTo){
+        LocalTime timeFrom = LocalTime.parse(openFrom, timeFormatter);
+        LocalTime timeTo = LocalTime.parse(openTo, timeFormatter);
+        Duration duration = Duration.between(timeFrom, timeTo).truncatedTo(ChronoUnit.HOURS);
+
+        // Calculate the number of full hours
+        long fullHours = duration.toHours();
+        return (int) fullHours;
     }
 }
