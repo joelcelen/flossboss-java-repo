@@ -1,25 +1,30 @@
-import org.bson.Document;
-import org.bson.json.JsonObject;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DentistService {
-    private static String dentistName;
+
+    /** A thread-safe collection to manage dentist sessions. The ConcurrentHashMap allows
+     *  efficient and concurrent access, supporting multiple threads without compromising
+     *  data integrity. It's used to store and retrieve DentistSession objects for each
+     *  unique email, ensuring safe operations in a multithreaded environment.*/
+    private final Map<String, DentistSession> sessions = new ConcurrentHashMap<>();
+
     public static void main(String[] args){
+        DentistService dentistService = new DentistService();
 
         BrokerClient brokerClient = new BrokerClient(); // Instantiate MQTT Broker instance
         brokerClient.connect(); // Connect to MQTT Broker
         DatabaseClient databaseClient = new DatabaseClient();   // Instantiate Database Client instance
         databaseClient.connect("test"); // Connect to the specific DB within the cluster
-        databaseClient.setCollection("dentists");   // Set the collection on which you want to operate on
 
         // Invoke the MQTT Callback to handle incoming messages
-        mqttCallback(brokerClient, databaseClient);
+        dentistService.mqttCallback(brokerClient, databaseClient);
 
-    }   // Main method closing bracket
+    }
 
     /************************************************************
      * PLACE ALL METHODS BELOW THIS LINE!!!
@@ -27,8 +32,8 @@ public class DentistService {
      * Only call methods in main
      ***********************************************************/
 
-    // Handle incoming MQTT messages
-    private static void mqttCallback (BrokerClient brokerClient, DatabaseClient databaseClient) {
+    /** Handle incoming MQTT messages */
+    private void mqttCallback (BrokerClient brokerClient, DatabaseClient databaseClient) {
         // Specify topics
         final String REGISTER_REQUEST_TOPIC = "flossboss/dentist/register/request";
         final String LOGIN_REQUEST_TOPIC = "flossboss/dentist/login/request";
@@ -44,26 +49,30 @@ public class DentistService {
             public void messageArrived(String topic, MqttMessage mqttMessage){
                 // Put mqtt callback in its own thread using runnable so that it is continuously listening for messages.
                 Runnable mqtt = () -> {
-                    if (topic.equals(REGISTER_REQUEST_TOPIC)) {
-                        // Parse incoming payload(String) into JSON Object and extract values
-                        JSONObject registerRequest = new JSONObject(new String(mqttMessage.getPayload()));
-                        String email = registerRequest.getString("email");
-                        String fullName = registerRequest.getString("fullName");
-                        String password = registerRequest.getString("password");
-                        String clinicId = registerRequest.getString("clinicId");
-                        // Use extracted values to store dentist in database
-                        registerDentist(brokerClient, databaseClient, email, fullName, password, clinicId);
-                    }
-                    if (topic.equals(LOGIN_REQUEST_TOPIC)) {
-                        // Parse incoming payload(String) into JSON Object and extract values
-                        JSONObject loginRequest = new JSONObject(new String(mqttMessage.getPayload()));
-                        String email = loginRequest.getString("email");
-                        String password = loginRequest.getString("password");
-                        String clinicId = loginRequest.getString("clinicId");
+                    if (topic.equals(REGISTER_REQUEST_TOPIC) || topic.equals(LOGIN_REQUEST_TOPIC)) {
+                        // Parse payload into json object
+                        JSONObject message = new JSONObject(new String(mqttMessage.getPayload()));
+                        // For register and login request, email is included in the message (payload)
+                        String email = message.getString("email");
+                        /** computeIfAbsent is a method provided by the ConcurrentHashMap
+                         *  Two parameters: email and a lamdba function
+                         *  If the email is not already a key in the sessions map, the lambda function (k -> new DentistSession(email)) is executed. This function creates a new DentistSession object with the email.
+                         *  If the email already exists as a key in the map, computeIfAbsent returns the existing DentistSession associated with that email. */
+                        DentistSession dentistSession = sessions.computeIfAbsent(email, k -> new DentistSession(email));
 
-                        // Check if dentist exists in database, return boolean. Use boolean to publish if dentist is authenticated or not to broker.
-                        boolean isLoginSuccessful = verifyLogin(databaseClient, email, password, clinicId);
-                        publishLoginConfirmation(brokerClient, databaseClient, email, isLoginSuccessful);
+                        if (topic.equals(REGISTER_REQUEST_TOPIC)) {
+                            dentistSession.handleRegistration(message, brokerClient, databaseClient);
+                        } else if (topic.equals(LOGIN_REQUEST_TOPIC)){
+                            dentistSession.handleLogin(message, brokerClient, databaseClient);
+                        }
+                    } else if (topic.startsWith("flossboss/dentist/request/appointments/")) {
+                        // For request to get all appointments, Extract email from the topic
+                        String email = topic.substring("flossboss/dentist/request/appointments/".length());
+                        DentistSession dentistSession = sessions.get(email);
+                        if(dentistSession != null) {
+                            JSONObject message = new JSONObject(new String(mqttMessage.getPayload()));
+                            dentistSession.handleAppointments(message, brokerClient, databaseClient);
+                        }
                     }
                 };
                 new Thread(mqtt).start();
@@ -75,51 +84,4 @@ public class DentistService {
         });
     }
 
-    // Implement MQTT callback logic to store dentist in database.
-    private static void registerDentist(BrokerClient brokerClient, DatabaseClient databaseClient, String email, String fullName, String password, String clinicId) {
-        // Create dentist with parameter fields
-        Document dentistDocument = new Document()
-                .append("email",email)
-                .append("fullName",fullName)
-                .append("password",password)
-                .append("clinicId", clinicId);
-        databaseClient.createItem(dentistDocument);
-
-        String REGISTER_CONFIRMATION_TOPIC = "flossboss/dentist/register/confirmation/"+email;
-        String dentistId = databaseClient.getID(email);
-
-        // Store "confirmed" and "dentistId" in JSON object, convert JSON object to String and publish to MQTT Broker
-        JSONObject confirmation = new JSONObject();
-        confirmation.put("confirmed",true);
-        confirmation.put("dentistId",dentistId);
-        String payload = confirmation.toString();
-        brokerClient.publish(REGISTER_CONFIRMATION_TOPIC, payload, 0);
-    }
-
-    // Boolean method called in MQTT callback that uses parameters to check if the dentist exists in the database.
-    private static boolean verifyLogin(DatabaseClient databaseClient, String email, String password, String clinicId) {
-        Document query = databaseClient.findItemByEmail(email); // Use email to find dentist in database.
-        dentistName = query.getString("fullName");  // Extract name from database item, used in publishLoginConfirmation to send back dentist name (visual element in dentist UI)
-        // Check password and clinicId to authenticate dentist.
-        if (query.getString("password").equals(password) && query.getString("clinicId").equals(clinicId)) {
-            return true;
-        }
-        System.out.println("Failed to authenticate");
-        return false;
-
-    }
-
-    // Publish confirmation status to broker. Use boolean in parameter to publish if dentist is authenticated or not to broker
-    private static void publishLoginConfirmation(BrokerClient brokerClient, DatabaseClient databaseClient, String email, boolean isLoginSuccessful) {
-        String loginConfirmationTopic = "flossboss/dentist/login/confirmation/"+email;
-        String dentistId = databaseClient.getID(email);
-
-        // Store "confirmed", "dentistId" and "dentistName" in JSON object, convert JSON object to String and publish to MQTT Broker
-        JSONObject confirmation = new JSONObject();
-        confirmation.put("confirmed", isLoginSuccessful);
-        confirmation.put("dentistId", dentistId);
-        confirmation.put("dentistName", dentistName);
-        String payload = confirmation.toString();
-        brokerClient.publish(loginConfirmationTopic, payload, 0);
-    }
 }

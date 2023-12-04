@@ -8,7 +8,8 @@ import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-
+import org.json.JSONArray;
+import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -130,6 +131,39 @@ public class DatabaseClient {
         }
 
         return id;
+    }
+
+    /** Add dentists to clinic list of dentist */
+    public void addDentistToClinic(String clinicId, String dentistId) {
+        // Update the clinic document to add the dentistId
+        UpdateResult result = collection.updateOne(
+                Filters.eq("_id", new ObjectId(clinicId)),
+                Updates.push("dentists", dentistId)
+        );
+
+        // Check if the update was successful
+        if (result.wasAcknowledged() && result.getMatchedCount() > 0) {
+            System.out.println("Dentist added to clinic successfully.");
+        } else if (result.getMatchedCount() == 0) {
+            System.out.println("Clinic not found.");
+        } else {
+            System.out.println("Failed to add dentist to clinic.");
+        }
+    }
+
+    /** Retrieve all appointment items from DB for e specific dentist*/
+    public JSONArray getAppointmentsForDentist(String dentistId) {
+        JSONArray appointments = new JSONArray();
+        // Query to find all appointments where "_dentistId" field matches the dentistId given in the parameter
+        FindIterable<Document> dentistAppointments = collection.find(eq("_dentistId", dentistId));
+
+        // Loop through all the documents and convert each document (appointment) to a JSONObject and store in appointments array
+        for (Document appointment : dentistAppointments) {
+            String json = appointment.toJson();
+            JSONObject jsonAppointment = new JSONObject(json);
+            appointments.put(jsonAppointment);
+        }
+        return appointments;
     }
 
     /** Helper method to load in the environmentals from the .txt file **/
