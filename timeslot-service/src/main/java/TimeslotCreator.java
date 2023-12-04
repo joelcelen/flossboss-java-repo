@@ -30,19 +30,26 @@ public class TimeslotCreator {
         // Looks if the dentist already has existing timeslots
         boolean dentistExists = databaseClient.existsItemByValue("_dentistId", dentistId);
 
+        List<Document> timeslots = new ArrayList<>();
+
         // If dentist does not have any timeslots registered, generates them
         if(!dentistExists) {
             Clinic clinic = clinicHandler.retrieveClinic(clinicId);
+            long timerStart = System.currentTimeMillis();
 
             if (clinic != null) {
                 List<String> dentistList = clinic.getDentists();
 
                 for (String dentist : dentistList) {
                     if (dentist.equals(dentistId)) {
-                        this.createTimeslots(clinic.getId().get$oid(), dentist, LocalDate.now());
+                        this.createTimeslots(clinic.getId().get$oid(), dentist, LocalDate.now(), timeslots);
                     }
                 }
             }
+            // Insert the timeslots generated into the database and print the time it took in ms
+            databaseClient.insertMany(timeslots);
+            long elapsedTime = System.currentTimeMillis() - timerStart;
+            System.out.println("Elapsed Time: " + elapsedTime + " milliseconds");
         } else {
             System.out.println("Dentist with id: " + dentistId + " already has timeslots");
         }
@@ -55,17 +62,24 @@ public class TimeslotCreator {
         // Looks if the clinic already has existing timeslots
         boolean clinicExists = databaseClient.existsItemByValue("_clinicId", clinicId);
 
+        List<Document> timeslots = new ArrayList<>();
+
         // If clinic does not have any timeslots registered, generates them
         if(!clinicExists) {
             Clinic clinic = clinicHandler.retrieveClinic(clinicId);
+            long timerStart = System.currentTimeMillis();
 
             if (clinic != null) {
                 List<String> dentistList = clinic.getDentists();
 
                 for (String dentist : dentistList) {
-                    this.createTimeslots(clinic.getId().get$oid(), dentist, LocalDate.now());
+                    this.createTimeslots(clinic.getId().get$oid(), dentist, LocalDate.now(), timeslots);
                 }
             }
+            // Insert the timeslots generated into the database and print the time it took in ms
+            databaseClient.insertMany(timeslots);
+            long elapsedTime = System.currentTimeMillis() - timerStart;
+            System.out.println("Elapsed Time: " + elapsedTime + " milliseconds");
         } else {
             System.out.println("Clinic with id: " + clinicId + " already has timeslots.");
         }
@@ -76,16 +90,22 @@ public class TimeslotCreator {
         cleanupTimeslots();
         List<Clinic> clinicList = clinicHandler.retrieveAllClinics();
         LocalDate startDate = getStartDate();
+        List<Document> timeslots = new ArrayList<>();
 
         if(startDate != null) {
+            long timerStart = System.currentTimeMillis();
             for (Clinic clinic : clinicList) {
                 String clinicId = clinic.getId().get$oid();
                 List<String> dentistList = clinic.getDentists();
 
                 for (String dentist : dentistList) {
-                    this.createTimeslots(clinicId, dentist, startDate);
+                    this.createTimeslots(clinicId, dentist, startDate, timeslots);
                 }
             }
+            // Insert the timeslots generated into the database and print the time it took in ms
+            databaseClient.insertMany(timeslots);
+            long elapsedTime = System.currentTimeMillis() - timerStart;
+            System.out.println("Elapsed Time: " + elapsedTime + " milliseconds");
         } else {
             System.out.println("Timeslots already exists for this time period.");
         }
@@ -100,10 +120,7 @@ public class TimeslotCreator {
 
     // TODO: Try to return as a List instead and add in methods for less database insertions.
     /** Creates timeslots for a specific clinic and dentist **/
-    private void createTimeslots(String clinic, String dentist, LocalDate startDate){
-
-        List<Document> timeslots = new ArrayList<>();
-        long timerStart = System.currentTimeMillis();
+    private List<Document> createTimeslots(String clinic, String dentist, LocalDate startDate, List<Document> timeslots){
 
         long daysToAdd = daysToAdd(startDate);
 
@@ -114,7 +131,7 @@ public class TimeslotCreator {
                     LocalTime startTime = LocalTime.of(9, 0);
                     LocalTime endTime = LocalTime.of(9, 45);
                     for (int i = 0; i < 8; i++) { // Add number of timeslots
-                        Document tempDoc = new Document()
+                        Document timeslot = new Document()
                                 .append("_clinicId", clinic)
                                 .append("_dentistId", dentist)
                                 .append("_userId", "none")
@@ -124,20 +141,14 @@ public class TimeslotCreator {
                                 .append("isAvailable", true)
                                 .append("isPending", false)
                                 .append("isBooked", false);
-                        timeslots.add(tempDoc);
+                        timeslots.add(timeslot);
                         startTime = startTime.plusHours(1);
                         endTime = endTime.plusHours(1);
                     }
                 }
                 startDate = startDate.plusDays(1);
             }
-            System.out.println("Timeslots created.");
-
-            long elapsedTime = System.currentTimeMillis() - timerStart;
-            System.out.println("Elapsed Time: " + elapsedTime + " milliseconds");
-
-            databaseClient.insertMany(timeslots);
-
+            return timeslots;
     }
 
     /** Calculates the number of days that timeslots should be added for **/
