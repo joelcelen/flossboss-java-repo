@@ -1,3 +1,4 @@
+import com.google.gson.Gson;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -9,26 +10,26 @@ public class TimeslotService {
         BrokerClient brokerClient = BrokerClient.getInstance();
         brokerClient.connect();
 
-        // Create Database Client with placeholder URI, testing db so no need to mask
-        DatabaseClient databaseClient = DatabaseClient.getInstance("mongodb+srv://flossboss-test:vaSEAvtHSumlixAv@test-cluster.wlvtb6y.mongodb.net/?retryWrites=true&w=majority");
+        // Create Database Client instance
+        DatabaseClient databaseClient = DatabaseClient.getInstance();
 
-        // Connect to the specific DB within the cluster
-        databaseClient.connect("services-db");
+        //TODO:
+        // - Change this database to the actual database when integrating the service.
+        databaseClient.connect("test");
 
         // Set the collection on which you want to operate on
-        databaseClient.setCollection("services");
-
-        // Get specific test item, placeholder
-        String service = databaseClient.getID("TimeslotService");
-        System.out.println(databaseClient.readItem(service));
-
-        // Publish payload to topic, placeholder
-        brokerClient.publish("flossboss/test/publish", "I'm the TimeslotService", 0);
+        databaseClient.setCollection(DatabaseCollection.TIMESLOTS.getStringValue());
 
         // Subscribe to topic, placeholder
-        brokerClient.subscribe("flossboss/test/subscribe",0);
+        brokerClient.subscribe(Topic.CLEANUP.getStringValue(), 0);
+        brokerClient.subscribe(Topic.CLINIC.getStringValue(), 0);
+        brokerClient.subscribe(Topic.DENTIST.getStringValue(), 0);
+        brokerClient.subscribe(Topic.ALL.getStringValue(), 0);
 
-        // Placeholder callback functionality, replace with real logic once decided
+        // Create an instance of TimeslotCreator
+        TimeslotCreator timeslotCreator = new TimeslotCreator();
+
+        // Routes payloads to the appropriate methods.
         brokerClient.setCallback(
                 new MqttCallback() {
                     @Override
@@ -37,8 +38,35 @@ public class TimeslotService {
                     }
 
                     @Override
-                    public void messageArrived(String topic, MqttMessage mqttMessage) {
-                        System.out.println(mqttMessage);
+                    public void messageArrived(String topic, MqttMessage payload) {
+                        if(topic.equals(Topic.CLEANUP.getStringValue())){
+                            // Takes any payload
+                            timeslotCreator.cleanupTimeslots();
+                        } else if (topic.equals(Topic.CLINIC.getStringValue())) {
+                            // Creates a json-parser that parses the payload to a Java object
+                            Gson parser = new Gson();
+                            Payload message = parser.fromJson(payload.toString(), Payload.class);
+
+                            // Get necessary attributes from Payload
+                            String clinicId = message.getClinicId();
+
+                            timeslotCreator.generateClinic(clinicId);
+
+                        } else if (topic.equals(Topic.DENTIST.getStringValue())) {
+                            // Creates a json-parser that parses the payload to a Java object
+                            Gson parser = new Gson();
+                            Payload message = parser.fromJson(payload.toString(), Payload.class);
+
+                            // Get necessary attributes from Payload
+                            String clinicId = message.getClinicId();
+                            String dentistId = message.getDentistId();
+
+                            timeslotCreator.generateDentist(clinicId, dentistId);
+
+                        } else if (topic.equals(Topic.ALL.getStringValue())) {
+                            // Takes any payload
+                            timeslotCreator.generateAll();
+                        }
                     }
 
                     @Override

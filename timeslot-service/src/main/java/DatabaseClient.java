@@ -4,9 +4,11 @@ import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.io.BufferedReader;
@@ -14,6 +16,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class DatabaseClient {
@@ -77,18 +81,39 @@ public class DatabaseClient {
         }
     }
 
-    /** Reads an item based on the item's ID and returns it as JSON**/
-    public String readItem(String id) {
-
-        String query;
-        if(existsItem(id)){
-            Document item = collection.find(eq("_id", new ObjectId(id))).first();
-            query = item.toJson();
+    public void insertMany(List<Document> itemList){
+        InsertManyResult result = this.collection.insertMany(itemList);
+        if(result.wasAcknowledged()){
+            System.out.println("Appointments successfully inserted!");
         }else{
-            query = "No item with specified ID found";
+            System.out.println("Insertion of appointments failed.");
+        }
+    }
+
+    /** Reads an item based on the item's ID and returns it as JSON**/
+    public Document readItem(String id) {
+        Document query;
+        if(existsItem(id)){
+            query = collection.find(eq("_id", new ObjectId(id))).first();
+        }else{
+            query = null;
         }
 
         return query;
+    }
+
+    /** Reads many documents in the current collection and returns them as a list. **/
+    public List<Document> readMany() {
+
+        FindIterable<Document> documents = collection.find();
+
+        try (MongoCursor<Document> cursor = documents.iterator()) {
+            List<Document> entries = new ArrayList<>();
+            while (cursor.hasNext()) {
+                entries.add(cursor.next());
+            }
+            return entries;
+        }
     }
 
     /** Updates a single row of an item to your specified value **/
@@ -120,6 +145,16 @@ public class DatabaseClient {
         }
     }
 
+    /** Deletes many appointments based on some specific filter **/
+    public void deleteMany(Bson filter){
+        DeleteResult result = collection.deleteMany(filter);
+        if (result.wasAcknowledged()){
+            System.out.println("Successful clean-up!");
+        }else{
+            System.out.println("Failed to clean database");
+        }
+    }
+
     /** Find item in DB based on ID, if item found it returns ture, else it returns false **/
     public boolean existsItem(String id) {
 
@@ -128,6 +163,13 @@ public class DatabaseClient {
 
         // Check if any documents match the query
         return result.iterator().hasNext();
+    }
+
+    public boolean existsItemByValue(String attributeName, Object attributeValue) {
+        Document query = new Document(attributeName, attributeValue);
+
+        // Check if there is at least one matching document
+        return collection.find(query).iterator().hasNext();
     }
 
     /** Gets the auto generated ID based on name **/
