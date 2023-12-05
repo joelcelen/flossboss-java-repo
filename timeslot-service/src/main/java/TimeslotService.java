@@ -13,7 +13,8 @@ public class TimeslotService {
         // Create Database Client instance
         DatabaseClient databaseClient = DatabaseClient.getInstance();
 
-        // Connect to the specific DB within the cluster
+        //TODO:
+        // - Change this database to the actual database when integrating the service.
         databaseClient.connect("test");
 
         // Set the collection on which you want to operate on

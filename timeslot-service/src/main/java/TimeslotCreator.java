@@ -24,6 +24,13 @@ public class TimeslotCreator {
         this.clinicHandler = new ClinicHandler();
     }
 
+    public TimeslotCreator(DatabaseClient dbcClient, ClinicHandler clinicHandler){
+        this.dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        this.timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+        this.databaseClient = dbcClient;
+        this.clinicHandler = clinicHandler;
+    }
+
     /** Generates timeslots for a single dentist in a specified clinic **/
     public void generateDentist(String clinicId, String dentistId){
         cleanupTimeslots();
@@ -41,10 +48,14 @@ public class TimeslotCreator {
             if (clinic != null) {
                 List<String> dentistList = clinic.getDentists();
 
-                for (String dentist : dentistList) {
-                    if (dentist.equals(dentistId)) {
-                        this.createTimeslots(clinic, dentist, LocalDate.now(), timeslots);
+                if(dentistList != null) {
+                    for (String dentist : dentistList) {
+                        if (dentist.equals(dentistId)) {
+                            this.createTimeslots(clinic, dentist, LocalDate.now(), timeslots);
+                        }
                     }
+                }else{
+                    System.out.println("No dentists registered for this clinic.");
                 }
             }
             // Insert the timeslots generated into the database and print the time it took in ms
@@ -73,8 +84,12 @@ public class TimeslotCreator {
             if (clinic != null) {
                 List<String> dentistList = clinic.getDentists();
 
-                for (String dentist : dentistList) {
-                    this.createTimeslots(clinic, dentist, LocalDate.now(), timeslots);
+                if (dentistList != null) {
+                    for (String dentist : dentistList) {
+                        this.createTimeslots(clinic, dentist, LocalDate.now(), timeslots);
+                    }
+                } else {
+                    System.out.println("No dentists registered for clinic with id: " + clinicId);
                 }
             }
             // Insert the timeslots generated into the database and print the time it took in ms
@@ -119,11 +134,11 @@ public class TimeslotCreator {
     }
 
     /** Creates timeslots for a specific clinic and dentist **/
-    private void createTimeslots(Clinic clinic, String dentist, LocalDate startDate, List<Document> timeslots){
+    protected void createTimeslots(Clinic clinic, String dentist, LocalDate startDate, List<Document> timeslots){
 
-        long daysToAdd = daysToAdd(startDate);
+        long toAdd = daysToAdd(startDate);
 
-        LocalDate endDate = startDate.plusDays(daysToAdd);
+        LocalDate endDate = startDate.plusDays(toAdd);
         int numberOfSlots = calculateTimeslots(clinic.getOpenFrom(), clinic.getOpenTo());
 
             while (startDate.isBefore(endDate)) {
@@ -138,7 +153,7 @@ public class TimeslotCreator {
                                 .append("date", startDate)
                                 .append("timeFrom", startTime.format(this.timeFormatter))
                                 .append("timeTo", endTime.format(this.timeFormatter))
-                                .append("isAvailable", true)
+                                .append("isAvailable", false)
                                 .append("isPending", false)
                                 .append("isBooked", false);
                         timeslots.add(timeslot);
@@ -151,7 +166,7 @@ public class TimeslotCreator {
     }
 
     /** Calculates the number of days that timeslots should be added for **/
-    private long daysToAdd(LocalDate startDay){
+    protected long daysToAdd(LocalDate startDay){
 
         if(startDay.equals(LocalDate.now())) {
             // If the startDate is the current date, get the remaining days and add next month's days
@@ -166,7 +181,7 @@ public class TimeslotCreator {
     }
 
     /** Checks if there are currently entries for this month and the next month **/
-    private LocalDate getStartDate(){
+    protected LocalDate getStartDate(){
         // Checks if the current month is represented in the database
         boolean currentMonth = databaseClient.existsItemByValue("date", LocalDate.now());
         // Checks if the next month is represented in the database

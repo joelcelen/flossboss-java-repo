@@ -13,13 +13,9 @@ public class Clinic {
     private String zipcode;
     private List<String> dentists;
 
-    public MongoId getId() {
-        return _id;
-    }
+    public MongoId getId() { return _id; }
 
-    public String getName() {
-        return name;
-    }
+    public String getName() { return name; }
 
     public double getLatitude() {
         return latitude;
@@ -57,11 +53,58 @@ public class Clinic {
         return dentists;
     }
 
+    public void setId(MongoId id) {
+        this._id = id;}
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public void setOpenFrom(String openFrom) {
+        this.openFrom = openFrom;
+    }
+
+    public void setOpenTo(String openTo) {
+        this.openTo = openTo;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
+    }
+
+    public void setZipcode(String zipcode) {
+        this.zipcode = zipcode;
+    }
+
+    public void setDentists(List<String> dentists) {
+        this.dentists = dentists;
+    }
+
     public static class MongoId {
         private String $oid;
 
         public String get$oid() {
             return $oid;
+        }
+
+        public void set$oid(String $oid) {
+            this.$oid = $oid;
         }
     }
 }
