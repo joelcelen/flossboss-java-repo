@@ -18,8 +18,6 @@ public class LoggingService {
         // Set the collection on which you want to operate on
         databaseClient.setCollection("logger");
 
-        // Get specific test item, placeholder
-
         // Publish payload to topic, placeholder
         brokerClient.publish("flossboss/test/publish", "I'm the LoggingService", 0);
 

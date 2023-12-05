@@ -8,11 +8,11 @@ import java.time.LocalDateTime;
 import java.util.LinkedList;
 import java.util.Queue;
 
-public class TopicHandler implements Runnable {
+public class FileHandler implements Runnable {
 
     private final String TOPIC;
     Queue<String> messageQueue = new LinkedList<>();
-    public TopicHandler(String topic) {
+    public FileHandler(String topic) {
         this.TOPIC = topic;
     }
 
@@ -26,7 +26,6 @@ public class TopicHandler implements Runnable {
 
     //writes
     private synchronized void writeToFile() {
-        System.out.println("Writing to file");
         // Relative path from the project root
         String relativePath = "logs";
         String basePath = new File("").getAbsolutePath(); // Get the absolute path of the current working directory
