@@ -14,7 +14,7 @@ import static org.mockito.Mockito.*;
 
 public class AppointmentHandlerTest {
 
-    private final String samplePayload = "{\"_id\":\"sampleId\",\"userId\":\"sampleUserId\",\"clinicId\":\"sampleUserId\"}";
+    private final String samplePayload = "{\"_id\":\"sampleId\",\"_userId\":\"sampleUserId\",\"_clinicId\":\"sampleUserId\"}";
     private ExecutorService threadPoolMock;
     private PendingQueue pendingQueueMock;
     private BrokerClient brokerClientMock;
@@ -193,11 +193,96 @@ public class AppointmentHandlerTest {
 
         // Verify that the expected methods were called on the mocked objects
         sequential.verify(databaseClientMock, times(1)).isPending(anyString());
-        sequential.verify(databaseClientMock, times(1)).isBooked(anyString());
         sequential.verify(databaseClientMock, never()).updateString(anyString(), anyString(), anyString());
         sequential.verify(databaseClientMock, never()).updateBoolean(anyString(), anyString(), anyBoolean());
         sequential.verify(brokerClientMock, times(1)).publish(anyString(), anyString(), anyInt());
         logger.error(TEST_MARKER, "CancelInvalidTest Succeeded!");
+    }
+
+    /** Validity test case for handleUserCancel() method **/
+    @Test
+    public void cancelUserValidTest() {
+        logger.error(TEST_MARKER, "CancelUserValidTest Running...");
+        // Mock behavior for databaseClient.isPending calls
+        when(databaseClientMock.existsItemByValue(anyString(),anyString())).thenReturn(true);
+        when(databaseClientMock.isBooked(anyString())).thenReturn(true);
+
+        // Mock behavior for readItem to return a non-null Document
+        when(databaseClientMock.readItem(anyString())).thenReturn(new Document("someKey", "someValue"));
+
+        // Call the method to be tested
+        appointmentHandler.handleUserCancel(samplePayload);
+
+        // Verify that the expected methods were called on the mocked objects
+        sequential.verify(databaseClientMock, times(1)).existsItemByValue(anyString(),anyString());
+        sequential.verify(databaseClientMock, times(1)).isBooked(anyString());
+        sequential.verify(databaseClientMock, times(1)).updateString(anyString(), anyString(), anyString());
+        sequential.verify(databaseClientMock, times(2)).updateBoolean(anyString(), anyString(), anyBoolean());
+        sequential.verify(brokerClientMock, times(1)).publish(anyString(), anyString(), anyInt());
+        logger.error(TEST_MARKER, "CancelUserValidTest Succeeded!");
+    }
+
+    /** Invalidity test case for handleUserCancel() method **/
+    @Test
+    public void cancelUserInvalidTest() {
+        logger.error(TEST_MARKER, "CancelUserInvalidTest Running...");
+        // Mock behavior for databaseClient.isPending calls
+        when(databaseClientMock.isBooked(anyString())).thenReturn(false);
+
+        // Mock behavior for readItem to return a non-null Document
+        when(databaseClientMock.readItem(anyString())).thenReturn(new Document("someKey", "someValue"));
+
+        // Call the method to be tested
+        appointmentHandler.handleUserCancel(samplePayload);
+
+        // Verify that the expected methods were called on the mocked objects
+        sequential.verify(databaseClientMock, times(1)).isBooked(anyString());
+        sequential.verify(databaseClientMock, never()).updateString(anyString(), anyString(), anyString());
+        sequential.verify(databaseClientMock, never()).updateBoolean(anyString(), anyString(), anyBoolean());
+        sequential.verify(brokerClientMock, times(1)).publish(anyString(), anyString(), anyInt());
+        logger.error(TEST_MARKER, "CancelUserInvalidTest Succeeded!");
+    }
+
+    /** Validity test case for handleDentistCancel() method **/
+    @Test
+    public void cancelDentistValidTest() {
+        logger.error(TEST_MARKER, "CancelDentistValidTest Running...");
+        // Mock behavior for databaseClient.isPending calls
+        when(databaseClientMock.isAvailable(anyString())).thenReturn(true);
+
+        // Mock behavior for readItem to return a non-null Document
+        when(databaseClientMock.readItem(anyString())).thenReturn(new Document("someKey", "someValue"));
+
+        // Call the method to be tested
+        appointmentHandler.handleDentistCancel(samplePayload);
+
+        // Verify that the expected methods were called on the mocked objects
+        sequential.verify(databaseClientMock, times(1)).isAvailable(anyString());
+        sequential.verify(databaseClientMock, times(1)).updateString(anyString(), anyString(), anyString());
+        sequential.verify(databaseClientMock, times(3)).updateBoolean(anyString(), anyString(), anyBoolean());
+        sequential.verify(brokerClientMock, times(1)).publish(anyString(), anyString(), anyInt());
+        logger.error(TEST_MARKER, "CancelDentistValidTest Succeeded!");
+    }
+
+    /** Invalidity test case for handleDentistCancel() method **/
+    @Test
+    public void cancelDentistInvalidTest() {
+        logger.error(TEST_MARKER, "CancelDentistInvalidTest Running...");
+        // Mock behavior for databaseClient.isPending calls
+        when(databaseClientMock.isAvailable(anyString())).thenReturn(false);
+
+        // Mock behavior for readItem to return a non-null Document
+        when(databaseClientMock.readItem(anyString())).thenReturn(new Document("someKey", "someValue"));
+
+        // Call the method to be tested
+        appointmentHandler.handleDentistCancel(samplePayload);
+
+        // Verify that the expected methods were called on the mocked objects
+        sequential.verify(databaseClientMock, times(1)).isAvailable(anyString());
+        sequential.verify(databaseClientMock, never()).updateString(anyString(), anyString(), anyString());
+        sequential.verify(databaseClientMock, never()).updateBoolean(anyString(), anyString(), anyBoolean());
+        sequential.verify(brokerClientMock, times(1)).publish(anyString(), anyString(), anyInt());
+        logger.error(TEST_MARKER, "CancelDentistInvalidTest Succeeded!");
     }
 
     /** Validity test case for handleConfirm() method **/

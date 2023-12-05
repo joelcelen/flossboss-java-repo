@@ -1,18 +1,18 @@
 public class Payload {
     private String _id;
-    private String userId;
-    private String clinicId;
+    private String _userId;
+    private String _clinicId;
 
     public String getId() {
         return _id;
     }
 
     public String getUserId() {
-        return userId;
+        return _userId;
     }
 
     public String getClinicId() {
-        return clinicId;
+        return _clinicId;
     }
 
 }
