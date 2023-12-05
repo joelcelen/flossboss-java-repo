@@ -4,7 +4,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -26,11 +28,10 @@ public class FileHandler implements Runnable {
 
     //writes
     private synchronized void writeToFile() {
-        // Relative path from the project root
-        String relativePath = "logs";
-        String basePath = new File("").getAbsolutePath(); // Get the absolute path of the current working directory
-        String directoryPath = basePath + File.separator + relativePath;
-        String fileName = directoryPath + File.separator + TOPIC + ".txt";
+        // Get the current date to include in the filename
+        String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String fileName = getFileNameForDate(currentDate);
+
         File file = new File(fileName);
 
         // Ensure the directory exists
@@ -48,11 +49,19 @@ public class FileHandler implements Runnable {
         }
     }
 
+    private String getFileNameForDate(String date) {
+        // Relative path from the project root
+        String relativePath = "logs";
+        String basePath = new File("").getAbsolutePath(); // Get the absolute path of the current working directory
+        String directoryPath = basePath + File.separator + relativePath;
+        return directoryPath + File.separator + TOPIC + "_" + date + ".txt";
+    }
+
     @Override
     public void run() {
         while (true) {
             try {
-                Thread.sleep(30 * 60 * 1000); // writes to files every 30 minutes
+                Thread.sleep(5000); // writes to files every 30 minutes
                 writeToFile();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

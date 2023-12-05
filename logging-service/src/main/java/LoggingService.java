@@ -18,13 +18,10 @@ public class LoggingService {
         // Set the collection on which you want to operate on
         databaseClient.setCollection("logger");
 
-        // Publish payload to topic, placeholder
-        brokerClient.publish("flossboss/test/publish", "I'm the LoggingService", 0);
 
-        // Subscribe to topic, placeholder
+        // Subscribe to all topics
         brokerClient.subscribe("flossboss/#", 0);
 
-        // Placeholder callback functionality, replace with real logic once decided
         brokerClient.setCallback(new Logger());
     }
 }

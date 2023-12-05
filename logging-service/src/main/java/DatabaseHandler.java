@@ -23,7 +23,6 @@ public class DatabaseHandler implements Runnable {
                 if (CLIENT.existsItem(topic, today)) {
                     CLIENT.updateItem(topic, today, "dailyRequests", count);
                 } else {
-                    System.out.println("else was exectued");
                     createNewTopicLog(topic, today, count);
                 }
         });
@@ -42,7 +41,7 @@ public class DatabaseHandler implements Runnable {
     public void run() {
         while (true) {
             try {
-                Thread.sleep(5000); // Update every 15 minutes
+                Thread.sleep(15 * 60 * 1000); // Update every 15 minutes
                 updateDatabase();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt(); // Preserve interrupt status
