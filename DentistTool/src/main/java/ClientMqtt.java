@@ -26,14 +26,15 @@ public class ClientMqtt {
     }
 
     // Publish function, takes topic and message as argument. Publishes a payload that is converted to a byte array
-    public void publish(String topic, String payload) throws MqttException {
+    public void publish(String topic, String payload, int qos) throws MqttException {
         MqttMessage message = new MqttMessage(payload.getBytes());
+        message.setQos(qos);
         mqttClient.publish(topic, message);
     }
 
     // Subscribe function, takes topic as argument
-    public void subscribe(String topic) throws MqttException {
-        mqttClient.subscribe(topic);
+    public void subscribe(String topic, int qos) throws MqttException {
+        mqttClient.subscribe(topic, qos);
     }
 
     // Callback function, used to perform actions whenever a new message arrives.
