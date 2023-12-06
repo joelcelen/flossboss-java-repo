@@ -3,8 +3,13 @@ import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
+import java.io.FilterOutputStream;
 import java.sql.SQLOutput;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -189,10 +194,31 @@ public class DentistUI {
         // Sort appointments according to date and time
         Collections.sort(appointments, Comparator.comparing(Appointment::getDate).thenComparing(Appointment::getTimeFrom));
 
-        //Loop through and print appointments
+        // Print calender headers
+        System.out.println("----------------------------------------------------------");
+        System.out.println("  Day         Date         Time         Available   Booked");
+        System.out.println("----------------------------------------------------------");
+
+        LocalDate currentDate = null;   // Initialize currentDate as null
+
+        // Loop through appointments
         for (Appointment appointment : appointments) {
-            System.out.println(appointment);
+            // Parse appointment date into local date
+            LocalDate appointmentDate = appointment.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            // Create strings for calendar output
+            String timeSlot = appointment.getTimeFrom() + "-" + appointment.getTimeTo();
+            String availableStatus = appointment.isAvailable() ? "Yes" : "No";
+            String bookedStatus = appointment.isBooked() ? "Yes" : "No";
+            // Fill in calendar using printf to print everything in rows
+            if (currentDate == null || !currentDate.isEqual(appointmentDate)) {
+                currentDate = appointmentDate;
+                System.out.printf("%-10s %-12s %-18s %-10s %-6s%n", currentDate.getDayOfWeek(), currentDate, timeSlot, availableStatus, bookedStatus);
+
+            } else {
+                System.out.printf("%-23s %-18s %-10s %-6s%n"," ", timeSlot, availableStatus, bookedStatus);
+            }
         }
+
     }
 
     /** Call method when option "2: Manage Schedule" is selected */
@@ -204,7 +230,6 @@ public class DentistUI {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-
         displayAppointments();
     }
 
