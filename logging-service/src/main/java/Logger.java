@@ -1,6 +1,62 @@
-public class Logger {
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-    public String status(){
-        return "I'm a logger!";
+public class Logger implements MqttCallback {
+
+    private final DatabaseClient CLIENT = DatabaseClient.getInstance();
+
+    private ExecutorService threadPool = Executors.newFixedThreadPool(8);
+
+    private FileHandler appointmentReqHandler = new FileHandler("flossboss/appointment/request");
+    private FileHandler appointmentUpdateHandler = new FileHandler("flossboss/appointment/update");
+    private FileHandler dentistHandler = new FileHandler("flossboss/dentist");
+    private FileHandler timeSlotHandler = new FileHandler("flossboss/timeslots/clinic");
+
+    private DatabaseHandler appointmentReqDbHandler = new DatabaseHandler(CLIENT);
+    private DatabaseHandler appointmentUpdateDbHandler = new DatabaseHandler(CLIENT);
+    private DatabaseHandler dentistDbHandler = new DatabaseHandler(CLIENT);
+    private DatabaseHandler timeslotDbHandler = new DatabaseHandler(CLIENT);
+
+    public Logger () {
+        this.threadPool.submit(appointmentReqHandler);
+        this.threadPool.submit(appointmentUpdateHandler);
+        this.threadPool.submit(dentistHandler);
+        this.threadPool.submit(timeSlotHandler);
+        this.threadPool.submit(appointmentReqDbHandler);
+        this.threadPool.submit(appointmentUpdateDbHandler);
+        this.threadPool.submit(dentistDbHandler);
+        this.threadPool.submit(timeslotDbHandler);
+    }
+    @Override
+    public void connectionLost(Throwable throwable) {
+        System.out.println("Connection Lost");
+    }
+
+    @Override
+    public void messageArrived(String topic, MqttMessage mqttMessage) {
+        if(topic.startsWith("flossboss/appointment/request/")) {
+            System.out.println("message received");
+            appointmentReqHandler.appendToString(topic, mqttMessage);
+            appointmentReqDbHandler.incrementMessageCount(topic);
+        } else if(topic.startsWith("flossboss/appointment/update/")) {
+            System.out.println("message received");
+            appointmentUpdateHandler.appendToString(topic, mqttMessage);
+            appointmentUpdateDbHandler.incrementMessageCount(topic);
+        } else if(topic.startsWith("flossboss/dentist/")) {
+            System.out.println("message received");
+            dentistHandler.appendToString(topic, mqttMessage);
+            dentistDbHandler.incrementMessageCount(topic);
+        } else if(topic.startsWith("flossboss/timeslots/")) {
+            System.out.println("message received");
+            timeSlotHandler.appendToString(topic, mqttMessage);
+            timeslotDbHandler.incrementMessageCount(topic);
+        }
+    }
+    @Override
+    public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+        System.out.println("Delivery Complete");
     }
 }
