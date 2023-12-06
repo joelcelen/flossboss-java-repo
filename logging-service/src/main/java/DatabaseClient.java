@@ -16,7 +16,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.stream.Collectors;
 
 public class DatabaseClient {
@@ -102,9 +101,9 @@ public class DatabaseClient {
     }
 
     /** Gets the auto generated ID based on name **/
-    public String getID(String name){
+    public String getID(String topic){
         String id;
-        Document query = collection.find(eq("service_name", name)).first();
+        Document query = collection.find(eq("topicName", topic)).first();
         if (query != null){
             id = query.get("_id").toString();
         } else {
@@ -112,6 +111,31 @@ public class DatabaseClient {
         }
 
         return id;
+    }
+
+    public Document readItem(String topic, LocalDate date) {
+        Document query;
+
+        if(existsItem(topic, date)){
+            query = collection.find(eq("topicName", topic)).first();
+            return query;
+        }else{
+            System.out.println("Item does not exist");
+            return null;
+        }
+    }
+    public void deleteItem(String topic, LocalDate date) {
+        if(this.existsItem(topic, date)){
+            Bson query = Filters.and(Filters.eq("topicName", topic), Filters.eq("date", date));
+            DeleteResult result = this.collection.deleteOne(query);
+            if(result.wasAcknowledged()){
+                System.out.println("Item successfully deleted!");
+            }else{
+                System.out.println("Item was not deleted.");
+            }
+        }else{
+            System.out.println("No matching document found.");
+        }
     }
 
     /** Helper method to load in the environmentals from the .txt file **/

@@ -13,11 +13,13 @@ import java.util.Queue;
 public class FileHandler implements Runnable {
 
     private final String TOPIC;
-    Queue<String> messageQueue = new LinkedList<>();
+    private Queue<String> messageQueue = new LinkedList<>();
     public FileHandler(String topic) {
         this.TOPIC = topic;
     }
-
+    public Queue<String> getQueue() {
+        return this.messageQueue;
+    }
     //appends all request messages that are received to any topic
     public void appendToString(String topic, MqttMessage message) {
         String msg = message.toString();
@@ -26,8 +28,15 @@ public class FileHandler implements Runnable {
         messageQueue.add(messageEntry);
     }
 
+    //method for testing
+    public void appendToString(String topic, MqttMessage message, LocalDateTime date)  {
+        String msg = message.toString();
+        String messageEntry = String.format(date  + " |" + " [" + topic + "]" + " | " + msg + "\n");
+        messageQueue.add(messageEntry);
+    }
+
     //writes
-    private synchronized void writeToFile() {
+    public synchronized void writeToFile() {
         // Get the current date to include in the filename
         String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         String fileName = getFileNameForDate(currentDate);
@@ -49,7 +58,7 @@ public class FileHandler implements Runnable {
         }
     }
 
-    private String getFileNameForDate(String date) {
+    public String getFileNameForDate(String date) {
         // Relative path from the project root
         String relativePath = "logs";
         String basePath = new File("").getAbsolutePath(); // Get the absolute path of the current working directory
@@ -61,7 +70,7 @@ public class FileHandler implements Runnable {
     public void run() {
         while (true) {
             try {
-                Thread.sleep(5000); // writes to files every 30 minutes
+                Thread.sleep(30 * 60 * 1000); // writes to files every 30 minutes
                 writeToFile();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
