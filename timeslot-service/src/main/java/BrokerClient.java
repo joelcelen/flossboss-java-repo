@@ -28,14 +28,19 @@ public class BrokerClient {
     // Connection using the config file.
     public void connect(){
         try {
-            this.client = new MqttClient(this.hiveUrl,this.clientName);
-            MqttConnectOptions connOpts = new MqttConnectOptions();
-            connOpts.setCleanSession(true);
-            connOpts.setUserName(this.hiveUser);
-            connOpts.setPassword(this.hivePw);
-            System.out.println("Connecting to broker...");
-            this.client.connect(connOpts);
-            System.out.println("Connected");
+            if (client != null && client.isConnected()) {
+                System.out.println("Already connected. Skipping connection attempt.");
+            } else {
+                this.client = new MqttClient(this.hiveUrl, this.clientName);
+                MqttConnectOptions connOpts = new MqttConnectOptions();
+                connOpts.setCleanSession(true);
+                connOpts.setUserName(this.hiveUser);
+                connOpts.setPassword(this.hivePw);
+                System.out.println("Connecting to broker...");
+                this.client.connect(connOpts);
+                System.out.println("Connected");
+                setSubscriptions();
+            }
         } catch(MqttException me) {
             handleMqttException(me);
         }
@@ -74,6 +79,34 @@ public class BrokerClient {
         } catch(MqttException me) {
             handleMqttException(me);
         }
+    }
+
+    // Reconnect method in case of lost connection
+    public void reconnect(){
+        int maxReconnectAttempts = 3;
+        for (int attempt = 1; attempt <= maxReconnectAttempts; attempt++) {
+            System.out.println("Reconnection Attempt " + attempt);
+            try {
+                // Wait for 3 seconds before attempting reconnection
+                Thread.sleep(3000);
+                // Try to reconnect
+                connect();
+                // If successfully reconnected, break out of the loop
+                System.out.println("Reconnected successfully!");
+                break;
+            } catch (InterruptedException e) {
+                System.out.println("Reconnection attempt failed. Retrying...");
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /** Internal method for connecting to the correct subjects **/
+    public void setSubscriptions(){
+        subscribe(Topic.CLEANUP.getStringValue(), 0);
+        subscribe(Topic.CLINIC.getStringValue(), 0);
+        subscribe(Topic.DENTIST.getStringValue(), 0);
+        subscribe(Topic.ALL.getStringValue(), 0);
     }
 
     // Callback method
