@@ -1,6 +1,7 @@
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import com.google.gson.Gson;
 
 public class NotificationService {
     public static void main(String[] args){
@@ -10,23 +11,24 @@ public class NotificationService {
         brokerClient.connect();
 
         // Create Database Client with placeholder URI, testing db so no need to mask
-        DatabaseClient databaseClient = new DatabaseClient("mongodb+srv://flossboss-test:vaSEAvtHSumlixAv@test-cluster.wlvtb6y.mongodb.net/?retryWrites=true&w=majority");
+        // DatabaseClient databaseClient = new DatabaseClient();
 
         // Connect to the specific DB within the cluster
-        databaseClient.connect("services-db");
+        //databaseClient.connect("services-db");
 
         // Set the collection on which you want to operate on
-        databaseClient.setCollection("services");
+        //databaseClient.setCollection("services");
 
         // Get specific test item, placeholder
-        String service = databaseClient.getID("NotificationService");
-        System.out.println(databaseClient.readItem(service));
+        //String service = databaseClient.getID("NotificationService");
+        //System.out.println(databaseClient.readItem(service));
 
         // Publish payload to topic, placeholder
-        brokerClient.publish("flossboss/test/publish", "I'm the NotificationService", 0);
+        //brokerClient.publish("flossboss/test/publish", "I'm the NotificationService", 0);
 
         // Subscribe to topic, placeholder
-        brokerClient.subscribe("flossboss/test/subscribe",0);
+        brokerClient.subscribe(MqttTopics.TOPIC01,0);
+        brokerClient.subscribe(MqttTopics.TOPIC02,0);
 
         // Placeholder callback functionality, replace with real logic once decided
         brokerClient.setCallback(
@@ -38,7 +40,25 @@ public class NotificationService {
 
                     @Override
                     public void messageArrived(String topic, MqttMessage mqttMessage) {
-                        System.out.println(mqttMessage);
+
+                        String message = new String(mqttMessage.getPayload());
+                        User user = new Gson().fromJson(message, User.class);
+
+                        // Perform actions based on the topic
+                        if (topic.equals(MqttTopics.TOPIC01)) {
+
+                            System.out.println("confirmation email sent to the client: "+user.getName() + " at "+ user.getEmail());
+
+                            //emailSenderService.sendBookingConfirmationEmail(user);
+
+                        } else if (topic.equals(MqttTopics.TOPIC02)) {
+
+                            System.out.println("cancellation email sent to the custormer: "+user.getName()+" at "+ user.getEmail());
+
+                            //emailSenderService.sendCancellationEmail(user);
+                        }
+
+
                     }
 
                     @Override
