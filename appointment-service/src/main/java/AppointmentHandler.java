@@ -24,7 +24,7 @@ public class AppointmentHandler implements MqttCallback {
     }
     @Override
     public void connectionLost(Throwable throwable) {
-        System.out.println("Connection Lost");
+        brokerClient.reconnect();
     }
 
     /** Handles incoming messages depending on topic, thread pool assigns one thread to the operation  **/
