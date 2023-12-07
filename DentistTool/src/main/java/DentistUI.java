@@ -8,6 +8,8 @@ import java.sql.SQLOutput;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.json.JSONArray;
@@ -82,8 +84,8 @@ public class DentistUI {
             System.out.println("\n\n\n--- DENTIST USER INTERFACE ---");
             System.out.println("--- "+name+"\n");
             System.out.println("Select an option from the menu below: \n");
-            System.out.println("1: View Schedule");
-            System.out.println("2: Manage Schedule");
+            System.out.println("1: View Appointments");
+            System.out.println("2: Manage Appointments");
             System.out.println("X: Exit \n");
             option = scanner.next().charAt(0);
             scanner.nextLine();
@@ -92,7 +94,7 @@ public class DentistUI {
                // case '1' ->
                 case '2' -> {
                     try {
-                        manageSchedule(clientMqtt);
+                        manageAppointments(clientMqtt);
                     } catch (MqttException e) {
                         throw new RuntimeException(e);
                     }
@@ -192,7 +194,7 @@ public class DentistUI {
 
     private static void displayAppointments() {
         // Sort appointments according to date and time
-        Collections.sort(appointments, Comparator.comparing(Appointment::getDate).thenComparing(Appointment::getTimeFrom));
+        appointments.sort(Comparator.comparing(Appointment::getDate).thenComparing(Appointment::getTimeFrom));
 
         // Print calender headers
         System.out.println("----------------------------------------------------------");
@@ -221,16 +223,87 @@ public class DentistUI {
 
     }
 
-    /** Call method when option "2: Manage Schedule" is selected */
-    private static void manageSchedule(ClientMqtt clientMqtt) throws MqttException {
+    /** Display appointments where isAvailable is true */
+    private static void displayAvailableAppointments() {
+
+    }
+
+    /** Call method when option "2: Manage Appointments" is selected */
+    private static void manageAppointments(ClientMqtt clientMqtt) throws MqttException {
         // Request appointments from broker and pause thread while waiting for the data to arrive via MQTT
         requestAppointments(clientMqtt);
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        try {Thread.sleep(1000);} catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+        // Display appointments so that dentist can see all time slots
         displayAppointments();
+
+        // Prompt dentist to type appointments
+        System.out.print("Do you want to add or delete appointments? Press '+' to add or press '-' to delete.");
+        String addOrDelete = scanner.nextLine();
+
+        System.out.print("Enter time slots (HH:MM-HH:MM, HH:MM-HH:MM, ...)");
+        String timeSlotInput = scanner.nextLine();
+        String[] timeSlots = timeSlotInput.split(",\\s*");
+
+        System.out.println("Enter date range (YYYY-MM-DD, YYYY-MM-DD)");
+        String dateRangeInput = scanner.nextLine();
+
+        // For multiple dates
+        if (dateRangeInput.contains(",")) {
+            // Parse the date range
+            String[] dateRangeParts = dateRangeInput.split(",\\s*");
+            LocalDate startDate = LocalDate.parse(dateRangeParts[0]);
+            LocalDate endDate = LocalDate.parse(dateRangeParts[1]);
+
+            // Loop over date range
+            while (!startDate.isAfter(endDate)) {
+                // Loop over time slots and call "changeAvailable()"
+                timeSlotLoop(timeSlots, startDate, addOrDelete);
+                //Move to next day
+                startDate = startDate.plusDays(1);
+            }
+        }
+        // For single dates
+        else {
+            // Parse a single date
+            LocalDate date = LocalDate.parse(dateRangeInput);
+            // Loop over time slots and call "changeAvailable()"
+            timeSlotLoop(timeSlots, date, addOrDelete);
+        }
+    }
+
+    /** Helper method that loops through time slots given by dentist and calls changeAvailable */
+    private static void timeSlotLoop(String[] timeSlots, LocalDate date, String addOrDelete) {
+        for (String timeSlot : timeSlots) {
+            String[] timeSlotParts = timeSlot.split("-");
+            String timeFrom = timeSlotParts[0];
+            String timeTo = timeSlotParts[1];
+
+            changeAvailable(date, timeFrom, timeTo, addOrDelete);
+        }
+    }
+
+    private static void changeAvailable(LocalDate date, String timeFrom, String timeTo, String addOrDelete) {
+
+        //TODO
+        // Publish appointments
+        // Discuss with Joel how he wants the message
+
+        boolean isAvailable = (addOrDelete.equals("+"));
+
+        // Loop through the appointments to find the one matching the input from the parameters
+        for (Appointment appointment : appointments) {
+            if (appointment.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().isEqual(date) &&
+                appointment.getTimeFrom().equals(timeFrom) &&
+                appointment.getTimeTo().equals(timeTo)) {
+                // Update isAvailable based on the char from parameter
+                appointment.setAvailable(isAvailable);
+
+                // Debuggin remove later
+                System.out.println(appointment.getDate() + " "+ appointment.getTimeFrom() + " - " + appointment.getTimeTo() + " "+ appointment.isAvailable());
+                return; // Exit the loop once appointment is found and updated
+            }
+        }
+        System.out.println("Appointment not found");
     }
 
 

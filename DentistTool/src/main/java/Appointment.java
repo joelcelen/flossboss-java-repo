@@ -40,6 +40,10 @@ public class Appointment {
         return isAvailable;
     }
 
+    public void setAvailable(boolean available) {
+        this.isAvailable = available;
+    }
+
     public boolean isBooked() {
         return isBooked;
     }
