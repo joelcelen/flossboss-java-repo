@@ -43,7 +43,7 @@ public class BrokerClient {
                 connOpts.setPassword(this.hivePw);
                 System.out.println("Connecting to broker...");
                 this.client.connect(connOpts);
-                System.out.println("Connected");
+                System.out.println("Connected to broker with id: " + this.clientName);
                 setSubscriptions();
             }
         } catch(MqttException me) {
