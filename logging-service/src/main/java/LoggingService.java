@@ -6,18 +6,15 @@ public class LoggingService {
         brokerClient.connect();
         System.out.println("Working Directory: " + System.getProperty("user.dir"));
         // Create Database Client with placeholder URI, testing db so no need to mask
-        DatabaseClient databaseClient = DatabaseClient.getInstance("mongodb+srv://flossboss-test:vaSEAvtHSumlixAv@test-cluster.wlvtb6y.mongodb.net/?retryWrites=true&w=majority");
+        DatabaseClient databaseClient = DatabaseClient.getInstance();
 
         // Connect to the specific DB within the cluster
-        databaseClient.connect("services-db");
+        databaseClient.connect("test");
 
         // Set the collection on which you want to operate on
         databaseClient.setCollection("logger");
 
-
-        // Subscribe to all topics
-        brokerClient.subscribe("flossboss/#", 0);
-
+        // Set new instance of Logger class as callback class
         brokerClient.setCallback(new Logger());
     }
 }

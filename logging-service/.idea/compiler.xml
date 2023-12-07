@@ -7,10 +7,8 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="appointment-service" />
+        <module name="logging-service" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="logging-service" target="17" />
-    </bytecodeTargetLevel>
   </component>
 </project>

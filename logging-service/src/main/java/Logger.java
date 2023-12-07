@@ -7,7 +7,7 @@ import java.util.concurrent.Executors;
 public class Logger implements MqttCallback {
 
     private final DatabaseClient CLIENT = DatabaseClient.getInstance();
-
+    private final BrokerClient BROKER = BrokerClient.getInstance();
     private ExecutorService threadPool = Executors.newFixedThreadPool(8);
 
     private FileHandler appointmentReqHandler = new FileHandler("flossboss/appointment/request");
@@ -32,7 +32,7 @@ public class Logger implements MqttCallback {
     }
     @Override
     public void connectionLost(Throwable throwable) {
-        System.out.println("Connection Lost");
+        BROKER.reconnect();
     }
 
     @Override
