@@ -91,7 +91,13 @@ public class DentistUI {
             scanner.nextLine();
 
             switch (option) {
-               // case '1' ->
+                case '1' -> {
+                    try {
+                        displayAvailableAppointments(clientMqtt);
+                    } catch (MqttException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
                 case '2' -> {
                     try {
                         manageAppointments(clientMqtt);
@@ -137,7 +143,7 @@ public class DentistUI {
         JSONObject jsonDentist = new JSONObject();
         jsonDentist.put("email", email);
         jsonDentist.put("password", password);
-        jsonDentist.put("clinicId", clinicId);
+        jsonDentist.put("_clinicId", clinicId);
         String payload = jsonDentist.toString();
         clientMqtt.publish(LOGIN_REQUEST_TOPIC, payload, 0);
     }
@@ -166,7 +172,7 @@ public class DentistUI {
         jsonDentist.put("fullName", name);
         jsonDentist.put("email", email);
         jsonDentist.put("password", password);
-        jsonDentist.put("clinicId", clinicId);
+        jsonDentist.put("_clinicId", clinicId);
         String payload = jsonDentist.toString();
         clientMqtt.publish(REGISTER_REQUEST_TOPIC, payload, 0);
     }
@@ -220,12 +226,52 @@ public class DentistUI {
                 System.out.printf("%-23s %-18s %-10s %-6s%n"," ", timeSlot, availableStatus, bookedStatus);
             }
         }
-
     }
 
     /** Display appointments where isAvailable is true */
-    private static void displayAvailableAppointments() {
+    private static void displayAvailableAppointments(ClientMqtt clientMqtt) throws MqttException{
+        // Request appointments from broker and pause thread while waiting for the data to arrive via MQTT
+        requestAppointments(clientMqtt);
+        try {Thread.sleep(1000);} catch (InterruptedException e) { Thread.currentThread().interrupt(); }
 
+        // Create a list to store appointments where isAvailable is true
+        List<Appointment> availableAppointments = new ArrayList<>();
+        // Loop through appointments and add to list if isAvailable is true
+        if (appointments.isEmpty()) {
+            System.out.println("You have not made you self available to any appointments, press option '2: Manage Appointments' ");
+        }
+        for (Appointment appointment : appointments) {
+            if (appointment.isAvailable()) {
+                availableAppointments.add(appointment);
+            }
+        }
+        // Sort appointments according to date and time
+        appointments.sort(Comparator.comparing(Appointment::getDate).thenComparing(Appointment::getTimeFrom));
+
+        // Print calender headers
+        System.out.println("----------------------------------------------");
+        System.out.println("           My Available Appointments          ");
+        System.out.println("----------------------------------------------");
+        System.out.println("  Day         Date         Time         Booked");
+        System.out.println("----------------------------------------------");
+
+        LocalDate currentDate = null;   // Initialize currentDate as null
+
+        for (Appointment appointment : availableAppointments) {
+            // Parse appointment date into local date
+            LocalDate appointmentDate = appointment.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            // Create strings for calendar output
+            String timeSlot = appointment.getTimeFrom() + "-" + appointment.getTimeTo();
+            String bookedStatus = appointment.isBooked() ? "Yes" : "No";
+            // Fill in calendar using printf to print everything in rows
+            if (currentDate == null || !currentDate.isEqual(appointmentDate)) {
+                currentDate = appointmentDate;
+                System.out.printf("%-10s %-12s %-18s %-6s%n", currentDate.getDayOfWeek(), currentDate, timeSlot, bookedStatus);
+
+            } else {
+                System.out.printf("%-23s %-18s %-6s%n"," ", timeSlot, bookedStatus);
+            }
+        }
     }
 
     /** Call method when option "2: Manage Appointments" is selected */
@@ -286,7 +332,12 @@ public class DentistUI {
 
         //TODO
         // Publish appointments
-        // Discuss with Joel how he wants the message
+        // Discuss with Joel how and what he wants in the message
+        // Option 1: Store all appointments in one JSON array and publish.
+        //      If this option is chosen, make this function return a JSON object,
+        //      then add that json object to a JSON array in manageAppointments() and publish the array
+        // Option 2: Send appointments one at a time.
+        //      If this option is chosen, place the publish in this message
 
         boolean isAvailable = (addOrDelete.equals("+"));
 
@@ -298,8 +349,9 @@ public class DentistUI {
                 // Update isAvailable based on the char from parameter
                 appointment.setAvailable(isAvailable);
 
-                // Debuggin remove later
+                // Debugging remove later
                 System.out.println(appointment.getDate() + " "+ appointment.getTimeFrom() + " - " + appointment.getTimeTo() + " "+ appointment.isAvailable());
+
                 return; // Exit the loop once appointment is found and updated
             }
         }
@@ -325,14 +377,14 @@ public class DentistUI {
                         JSONObject confirmation = new JSONObject(new String(message.getPayload()));
                         if (confirmation.getBoolean("confirmed")) {
                             authenticated = true;
-                            dentistId = confirmation.getString("dentistId");    // Save dentistId, might be used later when appointment management is further specified.
+                            dentistId = confirmation.getString("_dentistId");    // Save dentistId, might be used later when appointment management is further specified.
                         }
                     }
                     if (topic.equals(loginConfirmationTopic)) {
                         JSONObject confirmation = new JSONObject(new String(message.getPayload()));
                         if (confirmation.getBoolean("confirmed")) {
                             authenticated = true;
-                            dentistId = confirmation.getString("dentistId");    // Save dentistId, might be used later when appointment management is further specified.
+                            dentistId = confirmation.getString("_dentistId");    // Save dentistId, might be used later when appointment management is further specified.
                             name = confirmation.getString("dentistName");       // Extract name from payload so that it is displayed in UI
                         }
                     }
