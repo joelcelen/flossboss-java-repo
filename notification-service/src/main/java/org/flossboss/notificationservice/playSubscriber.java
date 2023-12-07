@@ -1,0 +1,136 @@
+package org.flossboss.notificationservice;
+
+import com.google.gson.Gson;
+import org.eclipse.paho.client.mqttv3.*;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
+
+
+public class playSubscriber implements MqttCallback{
+
+    private final EmailSenderService emailSenderService;
+    private final IMqttClient client;
+    private String clientName;
+    private String hiveUrl;
+    private String hiveUser;
+    private char[] hivePw;
+
+
+    private ExecutorService a_thread = Executors.newSingleThreadExecutor();
+
+    public playSubscriber(EmailSenderService emailSenderService) throws MqttException{
+
+
+        this.getVariables();
+        this.client = new MqttClient(this.hiveUrl, this.clientName);
+        MqttConnectOptions options = new MqttConnectOptions();
+        options.setUserName(this.hiveUser);
+        options.setPassword(this.hivePw);
+
+        this.emailSenderService = emailSenderService;
+
+
+        System.out.print("Waiting for connection with MQTT-broker --");
+        client.connect(options);
+        System.out.println("--> Connected");
+        client.setCallback(this);
+    }
+
+    public void subscribeToTopic(){
+
+        a_thread.submit(() -> {
+            try {
+                client.subscribe(
+                        // Topics to Subscribe from Broker (defined in Enum class MqttConstants
+                        new String[]{
+                                MqttTopics.TOPIC01,
+                                MqttTopics.TOPIC02,
+                                MqttTopics.TOPIC03
+                        });
+
+            } catch (MqttException e) {
+                throw new RuntimeException(e);
+            }
+
+        });
+    }
+
+    @Override
+    public void connectionLost(Throwable cause) {
+        try {
+            client.disconnect();
+            client.close();
+        }catch(Exception e){
+            System.out.println("Connection lost!");
+        }
+    }
+
+    @Override
+    public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
+
+        String message = new String(mqttMessage.getPayload());
+        User user = new Gson().fromJson(message, User.class);
+
+        // Perform actions based on topics, defined in MqttTopics
+        if (topic.equals(MqttTopics.TOPIC01)) {
+
+           System.out.println("1-confirmation email sent to the custormer: "+user.getName() + " at "+ user.getEmail());
+
+            emailSenderService.sendBookingConfirmationEmail(user);
+
+        } else if (topic.equals(MqttTopics.TOPIC02)) {
+
+            System.out.println("2-cancellation email sent to the custormer: "+user.getName()+" at "+ user.getEmail());
+
+            emailSenderService.sendCancellationEmail(user);
+        } else if (topic.equals(MqttTopics.TOPIC03)) {
+
+            System.out.println("3-cancellation from doctor - email sent to the custormer: "+user.getName()+" at "+ user.getEmail());
+
+            emailSenderService.sendCancellationEmail(user);
+        }
+
+
+
+    }
+
+
+    @Override
+    public void deliveryComplete(IMqttDeliveryToken token) {
+
+    }
+
+
+    // Helper method to get the environmental variables from a txt file
+    private void getVariables() {
+
+        String path = "hiveconfig.txt";
+
+        try (
+                InputStream inputStream = BrokerClient.class.getClassLoader().getResourceAsStream(path)) {
+            if (inputStream == null) {
+                System.out.println("Cannot find "+path+" in classpath");
+            }
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+            String[] configLines = reader.lines().collect(Collectors.joining("\n")).split("\n");
+
+            // These need to be in the correct order in the txt file.
+            this.clientName = configLines[0].trim();
+            this.hiveUrl = configLines[1].trim();
+            this.hiveUser = configLines[2].trim();
+            this.hivePw = configLines[3].trim().toCharArray();
+        } catch (IOException e) {
+            System.out.println("Error configuring MQTT client: " + e.getMessage());
+        }
+    }
+
+
+
+}
