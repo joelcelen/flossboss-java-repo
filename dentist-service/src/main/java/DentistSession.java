@@ -13,8 +13,8 @@ public class DentistSession {
 
     /** Constants for collections */
     private static final String DENTIST_COLLECTION = "dentists";
-    private static final String CLINIC_COLLECTION = "clinics";
-    private static final String APPOINTMENT_COLLECTION = "appointments";
+    private static final String CLINIC_COLLECTION = "clinic-testing";
+    private static final String APPOINTMENT_COLLECTION = "timeslot-testing";
 
     /** Constructor */
     public DentistSession(String email) {
@@ -25,7 +25,7 @@ public class DentistSession {
     public void handleRegistration(JSONObject registerRequest, BrokerClient brokerClient, DatabaseClient databaseClient) {
         String fullName = registerRequest.getString("fullName");
         String password = registerRequest.getString("password");
-        String clinicId = registerRequest.getString("clinicId");
+        String clinicId = registerRequest.getString("_clinicId");
         // Check if given clinicId exists in the clinics collection
         boolean clinicExists = verifyClinic(databaseClient, clinicId);
         if (clinicExists) {
@@ -49,7 +49,7 @@ public class DentistSession {
     /** Handle authentication of a dentist in the database */
     public void handleLogin(JSONObject loginRequest, BrokerClient brokerClient, DatabaseClient databaseClient) {
         String password = loginRequest.getString("password");
-        String clinicId = loginRequest.getString("clinicId");
+        String clinicId = loginRequest.getString("_clinicId");
 
         boolean isLoginSuccessful = verifyLogin(databaseClient, email, password, clinicId);
         publishLoginConfirmation(brokerClient, databaseClient, email, isLoginSuccessful);
@@ -66,7 +66,7 @@ public class DentistSession {
                 .append("email",email)
                 .append("fullName",fullName)
                 .append("password",password)
-                .append("clinicId", clinicId);
+                .append("_clinicId", clinicId);
         databaseClient.createItem(dentistDocument);
         return databaseClient.getID(email);
     }
@@ -88,7 +88,7 @@ public class DentistSession {
         // Store "confirmed" and "dentistId" in JSON object, convert JSON object to String and publish to MQTT Broker
         JSONObject confirmation = new JSONObject();
         confirmation.put("confirmed",true);
-        confirmation.put("dentistId",dentistId);
+        confirmation.put("_dentistId",dentistId);
         String payload = confirmation.toString();
         brokerClient.publish(topic, payload, 0);
     }
@@ -115,7 +115,7 @@ public class DentistSession {
         // Store "confirmed", "dentistId" and "dentistName" in JSON object, convert JSON object to String and publish to MQTT Broker
         JSONObject confirmation = new JSONObject();
         confirmation.put("confirmed", isLoginSuccessful);
-        confirmation.put("dentistId", dentistId);
+        confirmation.put("_dentistId", dentistId);
         confirmation.put("dentistName", dentistName);
         String payload = confirmation.toString();
         brokerClient.publish(loginConfirmationTopic, payload, 0);
