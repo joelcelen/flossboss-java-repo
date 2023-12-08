@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class BrokerClient {
@@ -15,6 +16,9 @@ public class BrokerClient {
     private char[] hivePw;
 
     private BrokerClient(){
+        // Create a pseudo-random client name.
+        this.clientName = String.format("TimeslotService_%s", UUID.randomUUID());
+        // Get environmental variables
         this.getVariables();
     }
 
@@ -38,7 +42,7 @@ public class BrokerClient {
                 connOpts.setPassword(this.hivePw);
                 System.out.println("Connecting to broker...");
                 this.client.connect(connOpts);
-                System.out.println("Connected");
+                System.out.println("Connected to broker with id: " + this.clientName);
                 setSubscriptions();
             }
         } catch(MqttException me) {
@@ -133,7 +137,6 @@ public class BrokerClient {
                 System.out.println("Cannot find " + path + " in classpath. Reading variables from GitLab.");
 
                 // Read variables from GitLab environment variables
-                this.clientName = System.getenv("HIVE_CLIENT_NAME");
                 this.hiveUrl = System.getenv("HIVE_URL");
                 this.hiveUser = System.getenv("HIVE_USER");
                 this.hivePw = System.getenv("HIVE_PW").toCharArray();
@@ -143,10 +146,9 @@ public class BrokerClient {
                 String[] configLines = reader.lines().collect(Collectors.joining("\n")).split("\n");
 
                 // These need to be in the correct order in the txt file.
-                this.clientName = configLines[0].trim();
-                this.hiveUrl = configLines[1].trim();
-                this.hiveUser = configLines[2].trim();
-                this.hivePw = configLines[3].trim().toCharArray();
+                this.hiveUrl = configLines[0].trim();
+                this.hiveUser = configLines[1].trim();
+                this.hivePw = configLines[2].trim().toCharArray();
             }
         } catch (IOException e) {
             System.out.println("Error configuring MQTT client: " + e.getMessage());

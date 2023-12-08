@@ -1,0 +1,22 @@
+# Use an official Maven image to build the JAR
+FROM maven:3.8.4-openjdk-17 AS builder
+
+WORKDIR /app
+
+# Copy only the necessary files for the Maven build
+COPY pom.xml .
+COPY src src
+
+# Build the Maven project
+RUN mvn clean install -DskipTests
+
+# Use an official OpenJDK 17 runtime as a base image for the final image
+FROM openjdk:17-jdk-slim
+
+WORKDIR /app
+
+# Copy only the built JAR file from the Maven build stage
+COPY --from=builder /app/target/logging-service-1.0-SNAPSHOT.jar /app/logging-service-1.0-SNAPSHOT.jar
+
+# Specify the command to run the appointment-service application
+CMD ["java", "-jar", "/app/logging-service-1.0-SNAPSHOT.jar"]
