@@ -13,8 +13,8 @@ public class DentistSession {
 
     /** Constants for collections */
     private static final String DENTIST_COLLECTION = "dentists";
-    private static final String CLINIC_COLLECTION = "clinics";
-    private static final String APPOINTMENT_COLLECTION = "appointments";
+    private static final String CLINIC_COLLECTION = "clinic-testing";
+    private static final String APPOINTMENT_COLLECTION = "timeslot-testing";
 
     /** Constructor */
     public DentistSession(String email) {

@@ -1,9 +1,11 @@
 import org.json.JSONObject;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Appointment {
+    private String appointmentId;
+    private String dentistId;
+    private String clinicId;
     private Date date;
     private String timeFrom;
     private String timeTo;
@@ -12,6 +14,10 @@ public class Appointment {
 
     public Appointment(JSONObject jsonAppointment) {
         try {
+            JSONObject idObject = jsonAppointment.getJSONObject("_id");
+            this.appointmentId = idObject.getString("$oid");
+            this.dentistId = jsonAppointment.getString("_dentistId");
+            this.clinicId = jsonAppointment.getString("_clinicId");
             SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
             String dateString = jsonAppointment.getJSONObject("date").getString("$date");
             this.date = isoFormat.parse(dateString);
@@ -46,5 +52,21 @@ public class Appointment {
 
     public boolean isBooked() {
         return isBooked;
+    }
+
+    public void setBooked(boolean booked) {
+        isBooked = booked;
+    }
+
+    public String getAppointmentId() {
+        return appointmentId;
+    }
+
+    public String getDentistId() {
+        return dentistId;
+    }
+
+    public String getClinicId() {
+        return clinicId;
     }
 }
