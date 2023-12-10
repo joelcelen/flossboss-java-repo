@@ -81,18 +81,19 @@ public class playSubscriber implements MqttCallback{
         // Perform actions based on topics, defined in MqttTopics
         if (topic.equals(MqttTopics.TOPIC01)) {
 
-           System.out.println("1-confirmation email sent to the custormer: "+user.getName() + " at "+ user.getEmail());
+           //System.out.println("1-confirmation email: "+user.getUserId());
 
             emailSenderService.sendBookingConfirmationEmail(user);
 
         } else if (topic.equals(MqttTopics.TOPIC02)) {
 
-            System.out.println("2-cancellation email sent to the custormer: "+user.getName()+" at "+ user.getEmail());
+            //System.out.println("2-cancellation email from user: "+user.getUserId());
 
             emailSenderService.sendCancellationEmail(user);
+
         } else if (topic.equals(MqttTopics.TOPIC03)) {
 
-            System.out.println("3-cancellation from doctor - email sent to the custormer: "+user.getName()+" at "+ user.getEmail());
+            //System.out.println("3-cancellation from doctor: "+ user.getUserId());
 
             emailSenderService.sendCancellationEmail(user);
         }

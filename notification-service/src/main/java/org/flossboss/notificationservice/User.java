@@ -2,20 +2,22 @@ package org.flossboss.notificationservice;
 
 public class User {
 
-    private String name;
+
+    private String _userId;
     private String email;
-    private String password;
+
+    private String username;
+
+
+
+    public String getUserId() {
+        return _userId;
+    }
 
     public String getName() {
-        return name;
+        return username;
     }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getEmail() {
         return email;
     }
-
 }
