@@ -17,19 +17,13 @@ public class AppointmentService {
         BrokerClient brokerClient = BrokerClient.getInstance();
         brokerClient.connect();
 
-        // Create Database Client with placeholder URI, testing db so no need to mask
+        // Create Database Client
         DatabaseClient databaseClient = DatabaseClient.getInstance();
         // Connect to the specific DB within the cluster
-        databaseClient.connect("appointments");
+        databaseClient.connect("test");
 
         // Set the collection on which you want to operate on
-        databaseClient.setCollection("timeslots");
-
-        // Subscribe to topics, placeholders
-        brokerClient.subscribe(Topic.SUBSCRIBE_PENDING.getStringValue(),0);
-        brokerClient.subscribe(Topic.SUBSCRIBE_CANCEL.getStringValue(),0);
-        brokerClient.subscribe(Topic.SUBSCRIBE_CONFIRM.getStringValue(), 0);
-        brokerClient.subscribe(Topic.SUBSCRIBE_AVAILABLE.getStringValue(), 0);
+        databaseClient.setCollection("timeslot-testing");
 
         // Creates an instance of the appointment handler and binds it to the callback
         brokerClient.setCallback(new AppointmentHandler(threadPool));
