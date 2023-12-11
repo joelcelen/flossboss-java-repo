@@ -1,4 +1,4 @@
-import static com.mongodb.client.model.Filters.eq;
+package org.flossboss.notificationservice;
 
 import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
@@ -15,6 +15,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
+
+import static com.mongodb.client.model.Filters.eq;
 
 public class DatabaseClient {
 

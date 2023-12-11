@@ -1,3 +1,5 @@
+package org.flossboss.notificationservice;
+
 import org.eclipse.paho.client.mqttv3.*;
 
 import java.io.BufferedReader;
@@ -50,7 +52,7 @@ public class BrokerClient {
     public void subscribe(String topic, int qos){
         try {
             this.client.subscribe(topic, qos);
-            System.out.println("Subscribed to topic: " + topic);
+            System.out.println("Subscribing to topic: " + topic);
         }catch (MqttException me){
             handleMqttException(me);
         }

@@ -1,3 +1,5 @@
+package org.flossboss.notificationservice;
+
 public class Notification {
 
     public String status(){
