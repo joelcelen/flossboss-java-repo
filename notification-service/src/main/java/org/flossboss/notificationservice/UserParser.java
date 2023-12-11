@@ -9,8 +9,8 @@ public class UserParser {
     private DatabaseClient client;
 
     public UserParser(){
-        client = new DatabaseClient("mongodb://localhost:27017/");
-        client.connect("mylib");
+        client = new DatabaseClient();
+        client.connect("test");
         client.setCollection("users");
     }
 

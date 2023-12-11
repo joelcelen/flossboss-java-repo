@@ -33,7 +33,7 @@ public class CancellationTemplate implements EmailTemplate {
                     "Please contact us for further details.\n\n" +
                     "Regards,\nFlossboss Booking Service");
 
-            //mailSender.send(message);
+            mailSender.send(message);
             System.out.println("Cancellation email sent to user at "+userEmail);
         } else {
             System.out.println("User not found or invalid JSON");
