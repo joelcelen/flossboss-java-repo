@@ -6,7 +6,7 @@ public class User {
     private String _userId;
     private String email;
 
-    private String username;
+    private String name;
 
 
 
@@ -15,7 +15,7 @@ public class User {
     }
 
     public String getName() {
-        return username;
+        return name;
     }
     public String getEmail() {
         return email;
