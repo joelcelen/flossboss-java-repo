@@ -37,7 +37,7 @@ public class playSubscriber implements MqttCallback{
 
         this.emailSenderService = emailSenderService;
 
-        System.out.println("database: flossboss, collection: users, hivemq: personal, emails: disabled");
+        System.out.println("Database: flossboss, Collection: users, Hivemq: flossbossgu(NotificationServiceSubscriber), Emails: enabled");
 
 
         System.out.print("Waiting for connection with MQTT-broker --");
@@ -96,21 +96,21 @@ public class playSubscriber implements MqttCallback{
         // Perform actions based on topics, defined in MqttTopics
         if (topic.equals(MqttTopics.TOPIC01)) {
 
-           //System.out.println("1-confirmation email: "+user.getUserId());
-            System.out.println("topic 1 : "+user.getUserId());
+
+            System.out.println(MqttTopics.TOPIC01+" : " +user.getUserId());
 
            emailSenderService.sendBookingConfirmationEmail(user);
 
         } else if (topic.equals(MqttTopics.TOPIC02)) {
 
-            //System.out.println("2-cancellation email from user: "+user.getUserId());
-            System.out.println("topic 2 : "+user.getUserId());
+
+            System.out.println(MqttTopics.TOPIC02+" : " +user.getUserId());
             emailSenderService.sendCancellationEmail(user);
 
         } else if (topic.equals(MqttTopics.TOPIC03)) {
 
-            //System.out.println("3-cancellation from doctor: "+ user.getUserId());
-            System.out.println("topic 3 : "+user.getUserId());
+
+            System.out.println(MqttTopics.TOPIC03+" : " +user.getUserId());
             emailSenderService.sendCancellationEmail(user);
         }
 
