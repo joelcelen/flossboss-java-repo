@@ -16,7 +16,7 @@ public class TimeslotService {
 
         //TODO:
         // - Change this database to the actual database when integrating the service.
-        databaseClient.connect("test");
+        databaseClient.connect("flossboss");
 
         // Set the collection on which you want to operate on
         databaseClient.setCollection(DatabaseCollection.TIMESLOTS.getStringValue());

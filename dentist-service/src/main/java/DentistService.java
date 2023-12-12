@@ -19,7 +19,7 @@ public class DentistService {
         BrokerClient brokerClient = new BrokerClient(); // Instantiate MQTT Broker instance
         brokerClient.connect(); // Connect to MQTT Broker
         DatabaseClient databaseClient = new DatabaseClient();   // Instantiate Database Client instance
-        databaseClient.connect("test"); // Connect to the specific DB within the cluster
+        databaseClient.connect("flossboss"); // Connect to the specific DB within the cluster
 
         // Invoke the MQTT Callback to handle incoming messages
         dentistService.mqttCallback(brokerClient, databaseClient);

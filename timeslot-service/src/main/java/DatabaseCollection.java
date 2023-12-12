@@ -1,6 +1,6 @@
 public enum DatabaseCollection {
-    CLINICS("clinic-testing"),
-    TIMESLOTS("timeslot-testing");
+    CLINICS("clinics"),
+    TIMESLOTS("timeslots");
     private final String stringValue;
 
     DatabaseCollection(String stringValue) {
