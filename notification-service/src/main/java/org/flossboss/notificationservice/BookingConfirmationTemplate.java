@@ -33,10 +33,10 @@ public class BookingConfirmationTemplate implements EmailTemplate {
                     "Your appointment has been confirmed.\n\n" +
                     "Regards,\nFlossboss Booking Service");
 
-            mailSender.send(message);
+            //mailSender.send(message);
             System.out.println("Confirmation email sent to user at "+userEmail);
         } else {
-            System.out.println("User not found or invalid JSON");
+            System.out.println(" User not found ");
         }
     }
 }

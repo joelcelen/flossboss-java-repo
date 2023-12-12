@@ -1,6 +1,7 @@
 package org.flossboss.notificationservice;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import org.eclipse.paho.client.mqttv3.*;
 
 import java.io.BufferedReader;
@@ -36,6 +37,8 @@ public class playSubscriber implements MqttCallback{
 
         this.emailSenderService = emailSenderService;
 
+        System.out.println("database: flossboss, collection: users, hivemq: personal, emails: disabled");
+
 
         System.out.print("Waiting for connection with MQTT-broker --");
         client.connect(options);
@@ -47,13 +50,20 @@ public class playSubscriber implements MqttCallback{
 
         a_thread.submit(() -> {
             try {
+
                 client.subscribe(
                         // Topics to Subscribe from Broker (defined in Enum class MqttConstants
                         new String[]{
                                 MqttTopics.TOPIC01,
                                 MqttTopics.TOPIC02,
                                 MqttTopics.TOPIC03
-                        });
+                        }
+                        );
+                System.out.println("Listening to ....");
+                System.out.println(MqttTopics.TOPIC01);
+                System.out.println(MqttTopics.TOPIC02);
+                System.out.println(MqttTopics.TOPIC03);
+
 
             } catch (MqttException e) {
                 throw new RuntimeException(e);
@@ -73,32 +83,45 @@ public class playSubscriber implements MqttCallback{
     }
 
     @Override
-    public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
+    public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception, MqttException, JsonSyntaxException {
+
+
+        try {
 
         String message = new String(mqttMessage.getPayload());
+        System.out.println(message);
         User user = new Gson().fromJson(message, User.class);
+
 
         // Perform actions based on topics, defined in MqttTopics
         if (topic.equals(MqttTopics.TOPIC01)) {
 
            //System.out.println("1-confirmation email: "+user.getUserId());
+            System.out.println("topic 1 : "+user.getUserId());
 
-            emailSenderService.sendBookingConfirmationEmail(user);
+           emailSenderService.sendBookingConfirmationEmail(user);
 
         } else if (topic.equals(MqttTopics.TOPIC02)) {
 
             //System.out.println("2-cancellation email from user: "+user.getUserId());
-
+            System.out.println("topic 2 : "+user.getUserId());
             emailSenderService.sendCancellationEmail(user);
 
         } else if (topic.equals(MqttTopics.TOPIC03)) {
 
             //System.out.println("3-cancellation from doctor: "+ user.getUserId());
-
+            System.out.println("topic 3 : "+user.getUserId());
             emailSenderService.sendCancellationEmail(user);
         }
 
 
+    } catch (JsonSyntaxException e) {
+        // Handle JSON syntax exceptions
+        System.err.println("subscriber service01:Error parsing JSON: " + e.getMessage());
+    } catch (Exception e) {
+        // Handle other exceptions
+        System.err.println("subscriber service02: Error processing MQTT message: " + e.getMessage());
+    }
 
     }
 

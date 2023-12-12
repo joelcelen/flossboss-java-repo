@@ -26,7 +26,7 @@ public class UserParser {
 
         } catch (JsonSyntaxException e) {
 
-            //System.out.println("UserParser: User does not exist or JSON parsing failed");
+            System.out.println("UserParser: User does not exist or JSON parsing failed: "+e.getMessage());
 
         }
 
