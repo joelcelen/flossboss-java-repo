@@ -89,7 +89,7 @@ public class playSubscriber implements MqttCallback{
         try {
 
         String message = new String(mqttMessage.getPayload());
-        System.out.println(message);
+        //System.out.println(message);
         User user = new Gson().fromJson(message, User.class);
 
 
