@@ -10,7 +10,7 @@ public class UserParser {
 
     public UserParser(){
         client = new DatabaseClient();
-        client.connect("test");
+        client.connect("flossboss");
         client.setCollection("users");
     }
 
@@ -26,7 +26,7 @@ public class UserParser {
 
         } catch (JsonSyntaxException e) {
 
-            //System.out.println("UserParser: User does not exist or JSON parsing failed");
+            System.out.println("UserParser: User does not exist or JSON parsing failed: "+e.getMessage());
 
         }
 
