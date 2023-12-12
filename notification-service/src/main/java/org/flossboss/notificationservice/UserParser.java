@@ -10,7 +10,7 @@ public class UserParser {
 
     public UserParser(){
         client = new DatabaseClient();
-        client.connect("test");
+        client.connect("flossboss");
         client.setCollection("users");
     }
 

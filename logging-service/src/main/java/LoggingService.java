@@ -9,7 +9,7 @@ public class LoggingService {
         DatabaseClient databaseClient = DatabaseClient.getInstance();
 
         // Connect to the specific DB within the cluster
-        databaseClient.connect("test");
+        databaseClient.connect("flossboss");
 
         // Set the collection on which you want to operate on
         databaseClient.setCollection("logger");

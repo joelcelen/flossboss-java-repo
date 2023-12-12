@@ -20,10 +20,10 @@ public class AppointmentService {
         // Create Database Client
         DatabaseClient databaseClient = DatabaseClient.getInstance();
         // Connect to the specific DB within the cluster
-        databaseClient.connect("test");
+        databaseClient.connect("flossboss");
 
         // Set the collection on which you want to operate on
-        databaseClient.setCollection("timeslot-testing");
+        databaseClient.setCollection("timeslots");
 
         // Creates an instance of the appointment handler and binds it to the callback
         brokerClient.setCallback(new AppointmentHandler(threadPool));
