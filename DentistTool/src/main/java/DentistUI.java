@@ -36,7 +36,13 @@ public class DentistUI {
          ******************************/
 
         while (!authenticated ) {
-            System.out.println("\n\n\n--- DENTIST USER INTERFACE ---\n");
+            System.out.println("\n\n\n\n" +
+                    "______           _   _     _     _   _                 _____      _             __               \n" +
+                    "|  _  \\         | | (_)   | |   | | | |               |_   _|    | |           / _|              \n" +
+                    "| | | |___ _ __ | |_ _ ___| |_  | | | |___  ___ _ __    | | _ __ | |_ ___ _ __| |_ __ _  ___ ___ \n" +
+                    "| | | / _ \\ '_ \\| __| / __| __| | | | / __|/ _ \\ '__|   | || '_ \\| __/ _ \\ '__|  _/ _` |/ __/ _ \\\n" +
+                    "| |/ /  __/ | | | |_| \\__ \\ |_  | |_| \\__ \\  __/ |     _| || | | | ||  __/ |  | || (_| | (_|  __/\n" +
+                    "|___/ \\___|_| |_|\\__|_|___/\\__|  \\___/|___/\\___|_|     \\___/_| |_|\\__\\___|_|  |_| \\__,_|\\___\\___|\n");
             System.out.println("Select an option from the menu below:\n");
             System.out.println("1. LOGIN");
             System.out.println("2. Dont have an account? REGISTER");
@@ -76,8 +82,10 @@ public class DentistUI {
         boolean running = true;
 
         while (running) {
-            System.out.println("\n\n\n--- DENTIST USER INTERFACE ---");
-            System.out.println("--- "+name+"\n");
+            System.out.println("\n\n\n\n\n\n\n---------------------------------------");
+            System.out.println("-------        MAIN MENU        -------");
+            System.out.println("---------------------------------------");
+            System.out.println("Dr. "+name+"\n");
             System.out.println("Select an option from the menu below: \n");
             System.out.println("1: View Appointments");
             System.out.println("2: Manage Appointments");
