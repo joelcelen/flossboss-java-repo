@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
@@ -37,7 +38,7 @@ public class playSubscriber implements MqttCallback{
 
         this.emailSenderService = emailSenderService;
 
-        System.out.println("Database: flossboss, Collection: users, Hivemq: flossbossgu(NotificationServiceSubscriber), Emails: enabled");
+        System.out.println("Database: flossboss, Collection: users, Hivemq: Personal(NotificationServiceSubscriber), Emails: enabled");
 
 
         System.out.print("Waiting for connection with MQTT-broker --");
@@ -87,41 +88,49 @@ public class playSubscriber implements MqttCallback{
 
 
         try {
+            String message = new String(mqttMessage.getPayload());
 
-        String message = new String(mqttMessage.getPayload());
-        //System.out.println(message);
-        User user = new Gson().fromJson(message, User.class);
-
-
-        // Perform actions based on topics, defined in MqttTopics
-        if (topic.equals(MqttTopics.TOPIC01)) {
+            //Check if payload is not an empty string
+            if (!message.isEmpty()) {
 
 
-            System.out.println(MqttTopics.TOPIC01+" : " +user.getUserId());
+                try {
 
-           emailSenderService.sendBookingConfirmationEmail(user);
+                    User user = new Gson().fromJson(message, User.class);
 
-        } else if (topic.equals(MqttTopics.TOPIC02)) {
+                    // Check if userId is not empty and has valid 24 hexstring format
+                    if(!user.getUserId().isEmpty() && isValidUserId(user.getUserId())){
 
+                        if (topic.equals(MqttTopics.TOPIC01)) {
+                            System.out.println(MqttTopics.TOPIC01 + " ---> ");
+                            emailSenderService.sendBookingConfirmationEmail(user);
+                        } else if (topic.equals(MqttTopics.TOPIC02)) {
+                            System.out.println(MqttTopics.TOPIC02 + " ---> " );
+                            emailSenderService.sendCancellationEmail(user);
+                        } else if (topic.equals(MqttTopics.TOPIC03)) {
+                            System.out.println(MqttTopics.TOPIC03 + " ---> " );
+                            emailSenderService.sendCancellationEmail(user);
+                        }
 
-            System.out.println(MqttTopics.TOPIC02+" : " +user.getUserId());
-            emailSenderService.sendCancellationEmail(user);
+                    } else {
+                        System.out.println("null or invalid user id");
+                    }
 
-        } else if (topic.equals(MqttTopics.TOPIC03)) {
+                } catch (JsonSyntaxException e){
+                    System.out.println("invalid message payload: should be valid Json");
+                }
 
-
-            System.out.println(MqttTopics.TOPIC03+" : " +user.getUserId());
-            emailSenderService.sendCancellationEmail(user);
+            } else {
+                // Handle the case where the message payload is null
+                System.err.println("Received null message payload from MQTT broker");
+            }
+        } catch (JsonSyntaxException e) {
+            // Handle JSON syntax exceptions
+            System.err.println("Error parsing JSON: " + e.getMessage());
+        } catch (Exception e) {
+            // Handle other exceptions
+            System.err.println("Error processing MQTT message: " + e.getMessage());
         }
-
-
-    } catch (JsonSyntaxException e) {
-        // Handle JSON syntax exceptions
-        System.err.println("subscriber service01:Error parsing JSON: " + e.getMessage());
-    } catch (Exception e) {
-        // Handle other exceptions
-        System.err.println("subscriber service02: Error processing MQTT message: " + e.getMessage());
-    }
 
     }
 
@@ -129,6 +138,11 @@ public class playSubscriber implements MqttCallback{
     @Override
     public void deliveryComplete(IMqttDeliveryToken token) {
 
+    }
+
+    public boolean isValidUserId(String userId) {
+        // Check if the userId is not null and matches the pattern
+        return userId != null && Pattern.matches("^[0-9a-fA-F]{24}$", userId);
     }
 
 
