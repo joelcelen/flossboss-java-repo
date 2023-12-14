@@ -84,7 +84,7 @@ public class DentistUI {
         while (running) {
             System.out.println("\n\n\n\n\n\n\n---------------------------------------");
             System.out.println("-------        MAIN MENU        -------");
-            System.out.println("---------------------------------------");
+            System.out.println("---------------------------------------\n");
             System.out.println("Dr. "+name+"\n");
             System.out.println("Select an option from the menu below: \n");
             System.out.println("1: View Appointments");
@@ -131,7 +131,9 @@ public class DentistUI {
         String password;
         String clinicId;
 
-        System.out.println("\n--- LOGIN ---\n");
+        System.out.println("\n\n\n\n\n\n\n---------------------------------------");
+        System.out.println("-------          LOGIN          -------");
+        System.out.println("---------------------------------------\n");
         System.out.print("Enter email: ");
         email = scanner.nextLine();
         System.out.print("Enter password: ");
@@ -158,7 +160,9 @@ public class DentistUI {
         String password;
         String clinicId;
 
-        System.out.println("\n--- REGISTER ACCOUNT ---\n");
+        System.out.println("\n\n\n\n\n\n\n---------------------------------------");
+        System.out.println("-------     Register Account    -------");
+        System.out.println("---------------------------------------\n");
         System.out.print("Enter full name: ");
         name = scanner.nextLine();
         System.out.print("Enter preferred email: ");
