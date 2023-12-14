@@ -37,7 +37,7 @@ public class DentistSession {
 
             // Create the topic for registration confirmation and publish the confirmation message using the provided email.
             String registerConfirmationTopic = "flossboss/dentist/register/confirmation/"+email;
-            publishRegistrationConfirmation(brokerClient, registerConfirmationTopic, dentistId);
+            publishRegistrationConfirmation(brokerClient, registerConfirmationTopic);
 
             // Subscribe to topics that include email
             afterAuthenticatedSubscriptions(brokerClient);
@@ -81,11 +81,10 @@ public class DentistSession {
     }
 
     /** Publish confirmation status to broker. */
-    private void publishRegistrationConfirmation(BrokerClient brokerClient, String topic, String dentistId) {
+    private void publishRegistrationConfirmation(BrokerClient brokerClient, String topic) {
         // Store "confirmed" and "dentistId" in JSON object, convert JSON object to String and publish to MQTT Broker
         JSONObject confirmation = new JSONObject();
         confirmation.put("confirmed",true);
-        confirmation.put("_dentistId",dentistId);
         String payload = confirmation.toString();
         brokerClient.publish(topic, payload, 0);
     }
@@ -107,12 +106,10 @@ public class DentistSession {
     private void publishLoginConfirmation(BrokerClient brokerClient, DatabaseClient databaseClient, String email, boolean isLoginSuccessful) {
         databaseClient.setCollection(DENTIST_COLLECTION); // Set collection to dentists
         String loginConfirmationTopic = "flossboss/dentist/login/confirmation/"+email;
-        dentistId = databaseClient.getID(email);
 
         // Store "confirmed", "dentistId" and "dentistName" in JSON object, convert JSON object to String and publish to MQTT Broker
         JSONObject confirmation = new JSONObject();
         confirmation.put("confirmed", isLoginSuccessful);
-        confirmation.put("_dentistId", dentistId);
         confirmation.put("dentistName", dentistName);
         String payload = confirmation.toString();
         brokerClient.publish(loginConfirmationTopic, payload, 0);

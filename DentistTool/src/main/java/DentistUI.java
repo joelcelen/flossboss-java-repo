@@ -15,7 +15,6 @@ public class DentistUI {
     private static String name; // Dentist name, specified in registerDentist(), printed in menu
     private static String email; // Dentist email, specified by user, used in MQTT topic to confirm dentist registration
     private static boolean authenticated = false;   // condition to run authenticated loop, updated in mqttCallback()
-    private static String dentistId;    // dentist ID in mongodb database
     private static List<Appointment> appointments = new ArrayList<>();  // List of appointments, initialized in MQTT callback
 
 
@@ -404,6 +403,24 @@ public class DentistUI {
         }
     }
 
+    /** Parse date in MQTT payload */
+    private static void parseAppointmentPayloadAndUpdate(MqttMessage message, boolean isBooked) throws Exception {
+        JSONObject appointment = new JSONObject(new String(message.getPayload()));
+        // Parse message
+        String dentistId = appointment.getString("_dentistId");
+        String timeFrom = appointment.getString("timeFrom");
+        String timeTo = appointment.getString("timeTo");
+        // Parse date
+        String dateString = appointment.getJSONObject("date").getString("$date");
+        SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        Date date = isoFormat.parse(dateString);
+        LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+        // Update appointment with payload
+        appointmentUpdate(dentistId, localDate, timeFrom, timeTo, isBooked);
+
+    }
+
     /** Handle incoming MQTT messages */
     private static void mqttCallback(ClientMqtt clientMqtt) {
         String registerConfirmationTopic = "flossboss/dentist/register/confirmation/"+email;
@@ -426,49 +443,21 @@ public class DentistUI {
                         JSONObject confirmation = new JSONObject(new String(message.getPayload()));
                         if (confirmation.getBoolean("confirmed")) {
                             authenticated = true;
-                            dentistId = confirmation.getString("_dentistId");    // Save dentistId, might be used later when appointment management is further specified.
                         }
-                    }
-                    if (topic.equals(loginConfirmationTopic)) {
+                    } else if (topic.equals(loginConfirmationTopic)) {
                         JSONObject confirmation = new JSONObject(new String(message.getPayload()));
                         if (confirmation.getBoolean("confirmed")) {
                             authenticated = true;
-                            dentistId = confirmation.getString("_dentistId");    // Save dentistId, might be used later when appointment management is further specified.
                             name = confirmation.getString("dentistName");       // Extract name from payload so that it is displayed in UI
                         }
-                    }
-                    if (topic.equals(getAppointmentsTopic) && authenticated) {
+                    } else if (topic.equals(getAppointmentsTopic) && authenticated) {
                         JSONArray jsonArray = new JSONArray(new String(message.getPayload()));
                         appointments = storeAppointments(jsonArray);
-                    }
-                    if (topic.equals(CONFIRM_APPOINTMENT) && authenticated) {
-                        JSONObject appointment = new JSONObject(new String(message.getPayload()));
+                    } else if (topic.equals(CONFIRM_APPOINTMENT) && authenticated) {
+                        parseAppointmentPayloadAndUpdate(message, true);
 
-                        String dentistId = appointment.getString("_dentistId");
-                        String timeFrom = appointment.getString("timeFrom");
-                        String timeTo = appointment.getString("timeTo");
-                        // Parse date
-                        SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-                        String dateString = appointment.getJSONObject("date").getString("$date");
-                        Date date = isoFormat.parse(dateString);
-                        LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                        // Call appointment update
-                        appointmentUpdate(dentistId, localDate, timeFrom, timeTo,  true);
-
-                    }
-                    if (topic.equals(CANCEL_APPOINTMENT) && authenticated) {
-                        JSONObject appointment = new JSONObject(new String(message.getPayload()));
-
-                        String dentistId = appointment.getString("_dentistId");
-                        String timeFrom = appointment.getString("timeFrom");
-                        String timeTo = appointment.getString("timeTo");
-                        // Parse date from payload into localdate
-                        SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-                        String dateString = appointment.getJSONObject("date").getString("$date");
-                        Date date = isoFormat.parse(dateString);
-                        LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                        // Call appointment update
-                        appointmentUpdate(dentistId, localDate, timeFrom, timeTo,  false);
+                    } else if (topic.equals(CANCEL_APPOINTMENT) && authenticated) {
+                        parseAppointmentPayloadAndUpdate(message, false);
                     }
                 }
                 @Override
