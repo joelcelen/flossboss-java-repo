@@ -138,8 +138,6 @@ public class DentistUI {
         email = scanner.nextLine();
         System.out.print("Enter password: ");
         password = scanner.nextLine();
-        System.out.print("Enter clinic-ID: ");
-        clinicId = scanner.nextLine();
 
         // Initialize MQTT callback after email is set so that the subscribed topic includes email ("flossboss/dentist/register/confirmation/"+email)
         mqttCallback(clientMqtt);
@@ -148,7 +146,6 @@ public class DentistUI {
         JSONObject jsonDentist = new JSONObject();
         jsonDentist.put("email", email);
         jsonDentist.put("password", password);
-        jsonDentist.put("_clinicId", clinicId);
         String payload = jsonDentist.toString();
         clientMqtt.publish(LOGIN_REQUEST_TOPIC, payload, 0);
     }

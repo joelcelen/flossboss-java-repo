@@ -49,11 +49,8 @@ public class DentistSession {
     /** Handle authentication of a dentist in the database */
     public void handleLogin(JSONObject loginRequest, BrokerClient brokerClient, DatabaseClient databaseClient) {
         String password = loginRequest.getString("password");
-        String clinicId = loginRequest.getString("_clinicId");
-
-        boolean isLoginSuccessful = verifyLogin(databaseClient, email, password, clinicId);
+        boolean isLoginSuccessful = verifyLogin(databaseClient, email, password);
         publishLoginConfirmation(brokerClient, databaseClient, email, isLoginSuccessful);
-
         // Subscribe to topics that include email
         afterAuthenticatedSubscriptions(brokerClient);
     }
@@ -94,12 +91,12 @@ public class DentistSession {
     }
 
     /** Boolean method called in MQTT callback that uses parameters to check if the dentist exists in the database. */
-    private boolean verifyLogin(DatabaseClient databaseClient, String email, String password, String clinicId) {
+    private boolean verifyLogin(DatabaseClient databaseClient, String email, String password) {
         databaseClient.setCollection(DENTIST_COLLECTION);   // Set collection to dentists
         Document query = databaseClient.findItemByEmail(email); // Use email to find dentist in database.
         this.dentistName = query.getString("fullName");  // Extract name from database item, used in publishLoginConfirmation to send back dentist name (visual element in dentist UI)
         // Check password and clinicId to authenticate dentist.
-        if (query.getString("password").equals(password) && query.getString("_clinicId").equals(clinicId)) {
+        if (query.getString("password").equals(password)) {
             return true;
         }
         System.out.println("Failed to authenticate");
