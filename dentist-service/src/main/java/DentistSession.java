@@ -1,3 +1,5 @@
+import com.mongodb.ErrorCategory;
+import com.mongodb.MongoWriteException;
 import org.bson.Document;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -26,24 +28,32 @@ public class DentistSession {
         String fullName = registerRequest.getString("fullName");
         String password = registerRequest.getString("password");
         String clinicId = registerRequest.getString("_clinicId");
-        // Check if given clinicId exists in the clinics collection
+
+        // Initialize boolean to false and check if given clinicId exists in the clinics collection
+        boolean validEmail = false;
         boolean clinicExists = verifyClinic(databaseClient, clinicId);
-        if (clinicExists) {
+        try {
             // Create a new dentist document in the database and retrieve the dentist's ID
             this.dentistId = createDentist(databaseClient, email, fullName, password, clinicId);
+            validEmail = (dentistId != null);
 
-            // Add the created dentist to their clinic's list of dentists
-            linkDentistToClinic(databaseClient, clinicId, dentistId);
-
-            // Create the topic for registration confirmation and publish the confirmation message using the provided email.
-            String registerConfirmationTopic = "flossboss/dentist/register/confirmation/"+email;
-            publishRegistrationConfirmation(brokerClient, registerConfirmationTopic);
-
-            // Subscribe to topics that include email
-            afterAuthenticatedSubscriptions(brokerClient);
-        } else {
-            System.out.println("Provided clinic ID does not exist");
+            if (validEmail && clinicExists) {
+                // Add the created dentist to their clinic's list of dentists
+                linkDentistToClinic(databaseClient, clinicId, dentistId);
+                // Create the topic for registration confirmation and publish the confirmation message using the provided email.
+                String registerConfirmationTopic = "flossboss/dentist/register/confirmation/"+email;
+                publishRegistrationConfirmation(brokerClient, registerConfirmationTopic, true, true);
+                // Subscribe to topics that include email
+                afterAuthenticatedSubscriptions(brokerClient);
+            }
+        } catch (MongoWriteException exception) {
+            if (exception.getError().getCategory() == ErrorCategory.DUPLICATE_KEY) {
+                System.out.println("Error, a dentist with this email already exists");
+            }
         }
+        // Create the topic for registration confirmation and publish the confirmation message using the provided email.
+        String registerConfirmationTopic = "flossboss/dentist/register/confirmation/"+email;
+        publishRegistrationConfirmation(brokerClient, registerConfirmationTopic, validEmail, clinicExists);
     }
 
     /** Handle authentication of a dentist in the database */
@@ -64,14 +74,30 @@ public class DentistSession {
                 .append("fullName",fullName)
                 .append("password",password)
                 .append("_clinicId", clinicId);
-        databaseClient.createItem(dentistDocument);
-        return databaseClient.getID(email);
+
+        // Make sure email is unique before dentist is created
+        try {
+            databaseClient.createItem(dentistDocument);
+            return databaseClient.getID(email);
+        } catch (MongoWriteException exception) {
+            if (exception.getError().getCategory() == ErrorCategory.DUPLICATE_KEY) {
+                System.out.println("Error, a dentist with this email already exists");
+                return null;
+            }
+            throw exception;
+        }
+
     }
 
     /** Check if clinicID in parameter exist in the clinics collection */
     private boolean verifyClinic(DatabaseClient databaseClient, String clinicId) {
         databaseClient.setCollection(CLINIC_COLLECTION);    // Set collection to clinics
-        return databaseClient.existsItem(clinicId);
+        try {
+            return databaseClient.existsItem(clinicId);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Invalid clinic ID format: " + clinicId);
+            return false;
+        }
     }
 
     /** Add dentist to their clinic's list of dentists */
@@ -81,10 +107,10 @@ public class DentistSession {
     }
 
     /** Publish confirmation status to broker. */
-    private void publishRegistrationConfirmation(BrokerClient brokerClient, String topic) {
-        // Store "confirmed" and "dentistId" in JSON object, convert JSON object to String and publish to MQTT Broker
+    private void publishRegistrationConfirmation(BrokerClient brokerClient, String topic, boolean validEmail, boolean clinicExists) {
         JSONObject confirmation = new JSONObject();
-        confirmation.put("confirmed",true);
+        confirmation.put("validEmail", validEmail);
+        confirmation.put("clinicExists", clinicExists);
         String payload = confirmation.toString();
         brokerClient.publish(topic, payload, 0);
     }
@@ -92,13 +118,17 @@ public class DentistSession {
     /** Boolean method called in MQTT callback that uses parameters to check if the dentist exists in the database. */
     private boolean verifyLogin(DatabaseClient databaseClient, String email, String password) {
         databaseClient.setCollection(DENTIST_COLLECTION);   // Set collection to dentists
-        Document query = databaseClient.findItemByEmail(email); // Use email to find dentist in database.
-        this.dentistName = query.getString("fullName");  // Extract name from database item, used in publishLoginConfirmation to send back dentist name (visual element in dentist UI)
-        // Check password and clinicId to authenticate dentist.
-        if (query.getString("password").equals(password)) {
-            return true;
+        try {
+            Document query = databaseClient.findItemByEmail(email); // Use email to find dentist in database.
+            this.dentistName = query.getString("fullName");  // Extract name from database item, used in publishLoginConfirmation to send back dentist name (visual element in dentist UI)
+            // Check password and clinicId to authenticate dentist.
+            if (query.getString("password").equals(password)) {
+                return true;
+            }
+        } catch (NullPointerException e) {
+            System.out.println("Failed to authenticate");
+            return false;
         }
-        System.out.println("Failed to authenticate");
         return false;
     }
 

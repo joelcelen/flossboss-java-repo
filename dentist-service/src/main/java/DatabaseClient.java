@@ -2,6 +2,8 @@ import static com.mongodb.client.model.Filters.eq;
 
 import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertOneResult;
@@ -118,6 +120,12 @@ public class DatabaseClient {
     /** Find item in DB based on email */
     public Document findItemByEmail(String email) {
         return collection.find(eq("email",email)).first();
+    }
+
+    /** Ensure dentist email is unique */
+    public void ensureUniqueEmail() {
+        collection = database.getCollection("dentists");
+        collection.createIndex(Indexes.ascending("email"), new IndexOptions().unique(true));
     }
 
     /** Gets the auto generated ID based on email **/

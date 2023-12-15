@@ -30,19 +30,20 @@ public class DentistUI {
             return;
         }
 
+        System.out.println("\n\n\n\n" +
+                "______           _   _     _     _   _                 _____      _             __               \n" +
+                "|  _  \\         | | (_)   | |   | | | |               |_   _|    | |           / _|              \n" +
+                "| | | |___ _ __ | |_ _ ___| |_  | | | |___  ___ _ __    | | _ __ | |_ ___ _ __| |_ __ _  ___ ___ \n" +
+                "| | | / _ \\ '_ \\| __| / __| __| | | | / __|/ _ \\ '__|   | || '_ \\| __/ _ \\ '__|  _/ _` |/ __/ _ \\\n" +
+                "| |/ /  __/ | | | |_| \\__ \\ |_  | |_| \\__ \\  __/ |     _| || | | | ||  __/ |  | || (_| | (_|  __/\n" +
+                "|___/ \\___|_| |_|\\__|_|___/\\__|  \\___/|___/\\___|_|     \\___/_| |_|\\__\\___|_|  |_| \\__,_|\\___\\___|\n");
+
         /*******************************
          *  Authenticate dentist loop
          ******************************/
 
         while (!authenticated ) {
-            System.out.println("\n\n\n\n" +
-                    "______           _   _     _     _   _                 _____      _             __               \n" +
-                    "|  _  \\         | | (_)   | |   | | | |               |_   _|    | |           / _|              \n" +
-                    "| | | |___ _ __ | |_ _ ___| |_  | | | |___  ___ _ __    | | _ __ | |_ ___ _ __| |_ __ _  ___ ___ \n" +
-                    "| | | / _ \\ '_ \\| __| / __| __| | | | / __|/ _ \\ '__|   | || '_ \\| __/ _ \\ '__|  _/ _` |/ __/ _ \\\n" +
-                    "| |/ /  __/ | | | |_| \\__ \\ |_  | |_| \\__ \\  __/ |     _| || | | | ||  __/ |  | || (_| | (_|  __/\n" +
-                    "|___/ \\___|_| |_|\\__|_|___/\\__|  \\___/|___/\\___|_|     \\___/_| |_|\\__\\___|_|  |_| \\__,_|\\___\\___|\n");
-            System.out.println("Select an option from the menu below:\n");
+            System.out.println("\n\n\nSelect an option from the menu below:\n");
             System.out.println("1. LOGIN");
             System.out.println("2. Dont have an account? REGISTER");
             System.out.println("X. Exit\n");
@@ -128,7 +129,6 @@ public class DentistUI {
 
         final String LOGIN_REQUEST_TOPIC = "flossboss/dentist/login/request";
         String password;
-        String clinicId;
 
         System.out.println("\n\n\n\n\n\n\n---------------------------------------");
         System.out.println("-------          LOGIN          -------");
@@ -421,6 +421,36 @@ public class DentistUI {
 
     }
 
+    /** MQTT callback for registerConfirmationTopic */
+    private static void registerConfirmationCallback(MqttMessage message) {
+        final String VALID_EMAIL = "validEmail";
+        final String CLINIC_EXISTS = "clinicExists";
+        JSONObject confirmation = new JSONObject(new String(message.getPayload()));
+
+        if (confirmation.getBoolean(VALID_EMAIL) && confirmation.getBoolean(CLINIC_EXISTS)) {
+            authenticated = true;
+            System.out.println("\n\nRegistration Successful");
+        } else if (!confirmation.getBoolean(VALID_EMAIL) && confirmation.getBoolean(CLINIC_EXISTS)) {
+            System.out.println("\n\nRegistration failed. An account with the provided email already exists");
+        } else if (confirmation.getBoolean(VALID_EMAIL) && !confirmation.getBoolean(CLINIC_EXISTS)) {
+            System.out.println("\n\nRegistration failed. The provided clinic ID does not exist.");
+        } else {
+            System.out.println("\n\nRegistration failed. An account with the provided email already exists, and the provided clinic ID does not exists ");
+        }
+    }
+
+    /** MQTT callback for loginConfirmationTopic */
+    private static void loginConfirmationCallback(MqttMessage message) {
+        JSONObject confirmation = new JSONObject(new String(message.getPayload()));
+        if (confirmation.getBoolean("confirmed")) {
+            authenticated = true;
+            name = confirmation.getString("dentistName");       // Extract name from payload so that it is displayed in UI
+            System.out.println("\n\nLogin Successful");
+        } else {
+            System.out.println("\n\nLogin Failed");
+        }
+    }
+
     /** Handle incoming MQTT messages */
     private static void mqttCallback(ClientMqtt clientMqtt) {
         String registerConfirmationTopic = "flossboss/dentist/register/confirmation/"+email;
@@ -440,16 +470,9 @@ public class DentistUI {
                 @Override
                 public void messageArrived(String topic, MqttMessage message) throws Exception {
                     if(topic.equals(registerConfirmationTopic)) {
-                        JSONObject confirmation = new JSONObject(new String(message.getPayload()));
-                        if (confirmation.getBoolean("confirmed")) {
-                            authenticated = true;
-                        }
+                        registerConfirmationCallback(message);
                     } else if (topic.equals(loginConfirmationTopic)) {
-                        JSONObject confirmation = new JSONObject(new String(message.getPayload()));
-                        if (confirmation.getBoolean("confirmed")) {
-                            authenticated = true;
-                            name = confirmation.getString("dentistName");       // Extract name from payload so that it is displayed in UI
-                        }
+                        loginConfirmationCallback(message);
                     } else if (topic.equals(getAppointmentsTopic) && authenticated) {
                         JSONArray jsonArray = new JSONArray(new String(message.getPayload()));
                         appointments = storeAppointments(jsonArray);
