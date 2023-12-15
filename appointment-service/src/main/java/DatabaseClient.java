@@ -183,7 +183,7 @@ public class DatabaseClient {
     private void loadURI() {
         String path = "atlasconfig.txt";
 
-        try (InputStream inputStream = BrokerClient.class.getClassLoader().getResourceAsStream(path)) {
+        try (InputStream inputStream = DatabaseClient.class.getClassLoader().getResourceAsStream(path)) {
             if (inputStream == null) {
                 System.out.println("Cannot find " + path + " in classpath. Reading URI from environment variables.");
 
