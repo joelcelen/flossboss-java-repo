@@ -1,5 +1,6 @@
 package org.flossboss.notificationservice;
 
+import java.io.IOException;
 import java.util.Optional;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -14,23 +15,26 @@ public class UserParser {
         client.setCollection("users");
     }
 
-    public Optional<User> parsedUserObj(String id) {
-        String query = this.client.readItem(id);
-        User parsedUser = null;
+public Optional<User> parsedUserObj(String id) {
+    String query = this.client.readItem(id);
+    User parsedUser = null;
 
-
-        Gson gson = new Gson();
-        try {
-
-            parsedUser = gson.fromJson(query, User.class);
-
-        } catch (JsonSyntaxException e) {
-
-            //System.out.println("UserParser: User does not exist or JSON parsing failed");
-
+    Gson gson = new Gson();
+    try {
+        if (!query.isEmpty()) {
+            // Check if the query string is valid JSON before parsing
+            if (query.startsWith("{") && query.endsWith("}")) {
+                parsedUser = gson.fromJson(query, User.class);
+            }
+        } else {
+            System.out.println("Empty or null query result");
         }
-
-        return Optional.ofNullable(parsedUser);
+    } catch (Exception e) {
+        System.out.println("Error parsing JSON: " + e.getMessage());
     }
+
+    return Optional.ofNullable(parsedUser);
+}
+
 
 }

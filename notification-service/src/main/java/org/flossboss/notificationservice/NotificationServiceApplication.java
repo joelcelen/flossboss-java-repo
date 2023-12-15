@@ -25,7 +25,6 @@ public class NotificationServiceApplication {
 
 		//MQTT Broker/Subscriber instance and EmailService as dependency injection
 		playSubscriber subscriber = new playSubscriber(senderService);
-		subscriber.subscribeToTopic();
 
 	}
 }
