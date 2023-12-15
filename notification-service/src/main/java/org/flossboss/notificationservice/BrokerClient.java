@@ -36,6 +36,8 @@ public class BrokerClient {
         }
     }
 
+
+
     // Publish method
     public void publish(String topic, String content, int qos){
         try {
@@ -58,6 +60,19 @@ public class BrokerClient {
         }
     }
 
+
+    public void subscribe(String[] topics, int[] qosLevels) {
+        try {
+            this.client.subscribe(topics, qosLevels);
+            for (int i = 0; i < topics.length; i++) {
+                System.out.println("Subscribing to topic: " + topics[i] + " with QoS " + qosLevels[i]);
+            }
+        } catch (MqttException me) {
+            handleMqttException(me);
+        }
+    }
+
+
     // Disconnect method
     public void disconnect(){
         try {
@@ -74,7 +89,7 @@ public class BrokerClient {
     }
 
     // Helper method to print exception details
-    private void handleMqttException(MqttException me) {
+    public void handleMqttException(MqttException me) {
         System.out.println("reason " + me.getReasonCode());
         System.out.println("msg " + me.getMessage());
         System.out.println("loc " + me.getLocalizedMessage());
