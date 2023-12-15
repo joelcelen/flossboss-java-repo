@@ -40,9 +40,6 @@ public class DentistSession {
             if (validEmail && clinicExists) {
                 // Add the created dentist to their clinic's list of dentists
                 linkDentistToClinic(databaseClient, clinicId, dentistId);
-                // Create the topic for registration confirmation and publish the confirmation message using the provided email.
-                String registerConfirmationTopic = "flossboss/dentist/register/confirmation/"+email;
-                publishRegistrationConfirmation(brokerClient, registerConfirmationTopic, true, true);
                 // Subscribe to topics that include email
                 afterAuthenticatedSubscriptions(brokerClient);
             }
@@ -151,12 +148,11 @@ public class DentistSession {
         return databaseClient.getAppointmentsForDentist(dentistId);
     }
 
-    /** Convert appointments to string and publish*/
+    /** Convert appointments to string and publish, send all appointments in one message (array) to increase performance*/
     public void publishAppointments(BrokerClient brokerClient, DatabaseClient databaseClient) {
         String sendAppointmentsTopic = "flossboss/dentist/send/appointments/"+email;
         JSONArray appointments = getAppointments(databaseClient);
         String payload = appointments.toString();
-        System.out.println(payload);    // Debugging, Remove
         brokerClient.publish(sendAppointmentsTopic, payload, 0);
     }
 

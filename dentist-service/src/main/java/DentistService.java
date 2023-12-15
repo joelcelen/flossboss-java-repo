@@ -24,7 +24,6 @@ public class DentistService {
 
         // Invoke the MQTT Callback to handle incoming messages
         dentistService.mqttCallback(brokerClient, databaseClient);
-
     }
 
     /************************************************************
