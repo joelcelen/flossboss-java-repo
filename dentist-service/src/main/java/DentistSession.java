@@ -48,18 +48,8 @@ public class DentistSession {
                 System.out.println("Error, a dentist with this email already exists");
             }
         }
-        // Create the topic for registration confirmation and publish the confirmation message using the provided email.
-        String registerConfirmationTopic = "flossboss/dentist/register/confirmation/"+email;
-        publishRegistrationConfirmation(brokerClient, registerConfirmationTopic, validEmail, clinicExists);
-    }
-
-    /** Handle authentication of a dentist in the database */
-    public void handleLogin(JSONObject loginRequest, BrokerClient brokerClient, DatabaseClient databaseClient) {
-        String password = loginRequest.getString("password");
-        boolean isLoginSuccessful = verifyLogin(databaseClient, email, password);
-        publishLoginConfirmation(brokerClient, databaseClient, email, isLoginSuccessful);
-        // Subscribe to topics that include email
-        afterAuthenticatedSubscriptions(brokerClient);
+        // Publish confirmation
+        publishRegistrationConfirmation(brokerClient, validEmail, clinicExists);
     }
 
     /** Insert a dentist document into the database and return the dentist ID */
@@ -83,7 +73,6 @@ public class DentistSession {
             }
             throw exception;
         }
-
     }
 
     /** Check if clinicID in parameter exist in the clinics collection */
@@ -104,12 +93,22 @@ public class DentistSession {
     }
 
     /** Publish confirmation status to broker. */
-    private void publishRegistrationConfirmation(BrokerClient brokerClient, String topic, boolean validEmail, boolean clinicExists) {
+    private void publishRegistrationConfirmation(BrokerClient brokerClient, boolean validEmail, boolean clinicExists) {
+        final String REGISTER_CONFIRMATION_TOPIC = "flossboss/dentist/register/confirmation/"+email;
         JSONObject confirmation = new JSONObject();
         confirmation.put("validEmail", validEmail);
         confirmation.put("clinicExists", clinicExists);
         String payload = confirmation.toString();
-        brokerClient.publish(topic, payload, 0);
+        brokerClient.publish(REGISTER_CONFIRMATION_TOPIC, payload, 0);
+    }
+
+    /** Handle authentication of a dentist in the database */
+    public void handleLogin(JSONObject loginRequest, BrokerClient brokerClient, DatabaseClient databaseClient) {
+        String password = loginRequest.getString("password");
+        boolean isLoginSuccessful = verifyLogin(databaseClient, email, password);
+        publishLoginConfirmation(brokerClient, databaseClient, email, isLoginSuccessful);
+        // Subscribe to topics that include email
+        afterAuthenticatedSubscriptions(brokerClient);
     }
 
     /** Boolean method called in MQTT callback that uses parameters to check if the dentist exists in the database. */
@@ -118,7 +117,8 @@ public class DentistSession {
         try {
             Document query = databaseClient.findItemByEmail(email); // Use email to find dentist in database.
             this.dentistName = query.getString("fullName");  // Extract name from database item, used in publishLoginConfirmation to send back dentist name (visual element in dentist UI)
-            // Check password and clinicId to authenticate dentist.
+            this.dentistId = databaseClient.getID(email);   // Initialize dentist ID
+            // Check password to authenticate dentist.
             if (query.getString("password").equals(password)) {
                 return true;
             }
@@ -132,28 +132,31 @@ public class DentistSession {
     /** Publish confirmation status to broker. Use boolean in parameter to publish if dentist is authenticated or not to broker */
     private void publishLoginConfirmation(BrokerClient brokerClient, DatabaseClient databaseClient, String email, boolean isLoginSuccessful) {
         databaseClient.setCollection(DENTIST_COLLECTION); // Set collection to dentists
-        String loginConfirmationTopic = "flossboss/dentist/login/confirmation/"+email;
+        final String LOGIN_CONFIRMATION_TOPIC = "flossboss/dentist/login/confirmation/"+email;
 
         // Store "confirmed", "dentistId" and "dentistName" in JSON object, convert JSON object to String and publish to MQTT Broker
         JSONObject confirmation = new JSONObject();
         confirmation.put("confirmed", isLoginSuccessful);
         confirmation.put("dentistName", dentistName);
         String payload = confirmation.toString();
-        brokerClient.publish(loginConfirmationTopic, payload, 0);
+        brokerClient.publish(LOGIN_CONFIRMATION_TOPIC, payload, 0);
     }
 
     /** Set collection to appointments and retrieve all appointment items from DB for e specific dentist, return JSONArray of appointments */
     private JSONArray getAppointments(DatabaseClient databaseClient) {
         databaseClient.setCollection(APPOINTMENT_COLLECTION);
+        System.out.println("Dentist ID: "+ dentistId);
         return databaseClient.getAppointmentsForDentist(dentistId);
     }
 
     /** Convert appointments to string and publish, send all appointments in one message (array) to increase performance*/
     public void publishAppointments(BrokerClient brokerClient, DatabaseClient databaseClient) {
-        String sendAppointmentsTopic = "flossboss/dentist/send/appointments/"+email;
+        final String SEND_APPOINTMENTS_TOPIC = "flossboss/dentist/send/appointments/"+email;
         JSONArray appointments = getAppointments(databaseClient);
         String payload = appointments.toString();
-        brokerClient.publish(sendAppointmentsTopic, payload, 0);
+        System.out.println("Publishing appointments to: " + SEND_APPOINTMENTS_TOPIC);
+        System.out.println(payload);
+        brokerClient.publish(SEND_APPOINTMENTS_TOPIC, payload, 0);
     }
 
     /** Extract payload and publish appointments */
@@ -167,14 +170,12 @@ public class DentistSession {
     /** Subscribe to personal dentist topics that need email*/
     private void afterAuthenticatedSubscriptions(BrokerClient brokerClient) {
         if (email!=null || email.isEmpty()) {
-            String appointmentRequestTopic = "flossboss/dentist/request/appointments/"+email;
-            brokerClient.subscribe(appointmentRequestTopic, 0);
+            final String APPOINTMENT_REQUEST_TOPIC = "flossboss/dentist/request/appointments/"+email;
+            brokerClient.subscribe(APPOINTMENT_REQUEST_TOPIC, 0);
             // Add more subscriptions here that depend on email
         } else {
             System.out.println("Email is not set. Cannot subscribe to specific dentist topics");
         }
     }
-
-
 }
 

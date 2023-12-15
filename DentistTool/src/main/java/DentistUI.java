@@ -2,7 +2,6 @@ import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -29,7 +28,6 @@ public class DentistUI {
             System.out.println("Failed to configure MQTT client");
             return;
         }
-
         System.out.println("\n\n\n\n" +
                 "______           _   _     _     _   _                 _____      _             __               \n" +
                 "|  _  \\         | | (_)   | |   | | | |               |_   _|    | |           / _|              \n" +
@@ -41,7 +39,6 @@ public class DentistUI {
         /*******************************
          *  Authenticate dentist loop
          ******************************/
-
         while (!authenticated ) {
             System.out.println("\n\n\nSelect an option from the menu below:\n");
             System.out.println("1. LOGIN");
@@ -78,7 +75,6 @@ public class DentistUI {
         /*********************************
          *          MAIN UI LOOP
          ********************************/
-
         boolean running = true;
 
         while (running) {
@@ -186,8 +182,8 @@ public class DentistUI {
         JSONObject json = new JSONObject();
         json.put("getAppointments",true);
         String payload = json.toString();
-        String requestAppointmentsTopic = "flossboss/dentist/request/appointments/"+email;
-        clientMqtt.publish(requestAppointmentsTopic, payload,0);
+        final String REQUEST_APPOINTMENTS_TOPIC = "flossboss/dentist/request/appointments/"+email;
+        clientMqtt.publish(REQUEST_APPOINTMENTS_TOPIC, payload,0);
     }
 
     /** Store MQTT message of appointments in a list*/
@@ -226,7 +222,6 @@ public class DentistUI {
             if (currentDate == null || !currentDate.isEqual(appointmentDate)) {
                 currentDate = appointmentDate;
                 System.out.printf("%-10s %-12s %-18s %-10s %-6s%n", currentDate.getDayOfWeek(), currentDate, timeSlot, availableStatus, bookedStatus);
-
             } else {
                 System.out.printf("%-23s %-18s %-10s %-6s%n"," ", timeSlot, availableStatus, bookedStatus);
             }
@@ -273,7 +268,6 @@ public class DentistUI {
                 if (currentDate == null || !currentDate.isEqual(appointmentDate)) {
                     currentDate = appointmentDate;
                     System.out.printf("%-10s %-12s %-18s %-6s%n", currentDate.getDayOfWeek(), currentDate, timeSlot, bookedStatus);
-
                 } else {
                     System.out.printf("%-23s %-18s %-6s%n"," ", timeSlot, bookedStatus);
                 }
@@ -418,7 +412,6 @@ public class DentistUI {
 
         // Update appointment with payload
         appointmentUpdate(dentistId, localDate, timeFrom, timeTo, isBooked);
-
     }
 
     /** MQTT callback for registerConfirmationTopic */
@@ -453,15 +446,15 @@ public class DentistUI {
 
     /** Handle incoming MQTT messages */
     private static void mqttCallback(ClientMqtt clientMqtt) {
-        String registerConfirmationTopic = "flossboss/dentist/register/confirmation/"+email;
-        String loginConfirmationTopic = "flossboss/dentist/login/confirmation/"+email;
-        String getAppointmentsTopic = "flossboss/dentist/send/appointments/"+email;
+        final String REGISTER_CONFIRMATION_TOPIC = "flossboss/dentist/register/confirmation/"+email;
+        final String LOGIN_CONFIRMATION_TOPIC = "flossboss/dentist/login/confirmation/"+email;
+        final String GET_APPOINTMENTS_TOPIC = "flossboss/dentist/send/appointments/"+email;
         final String CONFIRM_APPOINTMENT = "flossboss/appointment/update/confirm";
         final String CANCEL_APPOINTMENT = "flossboss/appointment/update/canceluser";
         try {
-            clientMqtt.subscribe(registerConfirmationTopic, 0);
-            clientMqtt.subscribe(loginConfirmationTopic, 0);
-            clientMqtt.subscribe(getAppointmentsTopic, 0);
+            clientMqtt.subscribe(REGISTER_CONFIRMATION_TOPIC, 0);
+            clientMqtt.subscribe(LOGIN_CONFIRMATION_TOPIC, 0);
+            clientMqtt.subscribe(GET_APPOINTMENTS_TOPIC, 0);
             clientMqtt.subscribe(CONFIRM_APPOINTMENT, 0);
             clientMqtt.subscribe(CANCEL_APPOINTMENT, 0);
             clientMqtt.setCallback(new MqttCallback() {
@@ -469,16 +462,15 @@ public class DentistUI {
                 public void connectionLost(Throwable throwable) { System.out.println("Connection lost: " + throwable.getMessage());}
                 @Override
                 public void messageArrived(String topic, MqttMessage message) throws Exception {
-                    if(topic.equals(registerConfirmationTopic)) {
+                    if(topic.equals(REGISTER_CONFIRMATION_TOPIC)) {
                         registerConfirmationCallback(message);
-                    } else if (topic.equals(loginConfirmationTopic)) {
+                    } else if (topic.equals(LOGIN_CONFIRMATION_TOPIC)) {
                         loginConfirmationCallback(message);
-                    } else if (topic.equals(getAppointmentsTopic) && authenticated) {
+                    } else if (topic.equals(GET_APPOINTMENTS_TOPIC) && authenticated) {
                         JSONArray jsonArray = new JSONArray(new String(message.getPayload()));
                         appointments = storeAppointments(jsonArray);
                     } else if (topic.equals(CONFIRM_APPOINTMENT) && authenticated) {
                         parseAppointmentPayloadAndUpdate(message, true);
-
                     } else if (topic.equals(CANCEL_APPOINTMENT) && authenticated) {
                         parseAppointmentPayloadAndUpdate(message, false);
                     }
