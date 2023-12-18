@@ -153,10 +153,27 @@ public class DentistUI {
         System.out.println("---------------------------------------\n");
         System.out.print("Enter full name: ");
         name = scanner.nextLine();
-        System.out.print("Enter preferred email: ");
-        email = scanner.nextLine();
-        System.out.print("Enter preferred password: ");
-        String password = scanner.nextLine();
+        // Ensure valid email using regular expression
+        boolean validEmail = false;
+        while (!validEmail) {
+            System.out.print("Enter preferred email: ");
+            email = scanner.nextLine();
+            validEmail = email.matches("^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$");
+            if (!validEmail) {
+                System.out.println("Invalid email. Please try again.");
+            }
+        }
+        // Ensure password does not contain spaces
+        boolean validPassword = false;
+        String password = null;
+        while (!validPassword) {
+            System.out.print("Enter preferred password: ");
+            password = scanner.nextLine();
+            validPassword = !password.contains(" ");
+            if (!validPassword) {
+                System.out.println("Invalid password. Please try again.");
+            }
+        }
         System.out.print("Enter clinic-ID: ");
         String clinicId = scanner.nextLine();
 
@@ -287,11 +304,9 @@ public class DentistUI {
         // Prompt dentist to type appointments
         System.out.println("Do you want to add or delete appointments? Press '+' to add or press '-' to delete.");
         String addOrDelete = scanner.nextLine();
-
         System.out.println("Enter time slots (HH:MM-HH:MM, HH:MM-HH:MM, ...)");
         String timeSlotInput = scanner.nextLine();
         String[] timeSlots = timeSlotInput.split(",\\s*");
-
         System.out.println("Enter date range (YYYY-MM-DD, YYYY-MM-DD)");
         String dateRangeInput = scanner.nextLine();
 
@@ -426,10 +441,8 @@ public class DentistUI {
             System.out.println("\n\nRegistration Successful");
         } else if (!confirmation.getBoolean(VALID_EMAIL) && confirmation.getBoolean(CLINIC_EXISTS)) {
             System.out.println("\n\nRegistration failed. An account with the provided email already exists");
-        } else if (confirmation.getBoolean(VALID_EMAIL) && !confirmation.getBoolean(CLINIC_EXISTS)) {
-            System.out.println("\n\nRegistration failed. The provided clinic ID does not exist.");
         } else {
-            System.out.println("\n\nRegistration failed. An account with the provided email already exists, and the provided clinic ID does not exists ");
+            System.out.println("\n\nRegistration failed. The provided clinic ID does not exist.");
         }
     }
 

@@ -32,22 +32,25 @@ public class DentistSession {
         // Initialize boolean to false and check if given clinicId exists in the clinics collection
         boolean validEmail = false;
         boolean clinicExists = verifyClinic(databaseClient, clinicId);
-        try {
-            // Create a new dentist document in the database and retrieve the dentist's ID
-            this.dentistId = createDentist(databaseClient, email, fullName, password, clinicId);
-            validEmail = (dentistId != null);
+        if (clinicExists) {
+            try {
+                // Create a new dentist document in the database and retrieve the dentist's ID
+                this.dentistId = createDentist(databaseClient, email, fullName, password, clinicId);
+                validEmail = (dentistId != null);
 
-            if (validEmail && clinicExists) {
-                // Add the created dentist to their clinic's list of dentists
-                linkDentistToClinic(databaseClient, clinicId, dentistId);
-                // Subscribe to topics that include email
-                afterAuthenticatedSubscriptions(brokerClient);
-            }
-        } catch (MongoWriteException exception) {
-            if (exception.getError().getCategory() == ErrorCategory.DUPLICATE_KEY) {
-                System.out.println("Error, a dentist with this email already exists");
+                if (validEmail) {
+                    // Add the created dentist to their clinic's list of dentists
+                    linkDentistToClinic(databaseClient, clinicId, dentistId);
+                    // Subscribe to topics that include email
+                    afterAuthenticatedSubscriptions(brokerClient);
+                }
+            } catch (MongoWriteException exception) {
+                if (exception.getError().getCategory() == ErrorCategory.DUPLICATE_KEY) {
+                    System.out.println("Error, a dentist with this email already exists");
+                }
             }
         }
+
         // Publish confirmation
         publishRegistrationConfirmation(brokerClient, validEmail, clinicExists);
     }
