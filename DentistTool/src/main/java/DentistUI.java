@@ -143,7 +143,7 @@ public class DentistUI {
         jsonDentist.put("email", email);
         jsonDentist.put("password", password);
         String payload = jsonDentist.toString();
-        clientMqtt.publish(LOGIN_REQUEST_TOPIC, payload, 0);
+        clientMqtt.publish(LOGIN_REQUEST_TOPIC, payload, 1);
     }
 
     /** Prompt user to register and publish given data to MQTT */
@@ -192,7 +192,7 @@ public class DentistUI {
         jsonDentist.put("password", password);
         jsonDentist.put("_clinicId", clinicId);
         String payload = jsonDentist.toString();
-        clientMqtt.publish(REGISTER_REQUEST_TOPIC, payload, 0);
+        clientMqtt.publish(REGISTER_REQUEST_TOPIC, payload, 1);
     }
 
     /** Publish request to get appointments from DB */
@@ -201,7 +201,7 @@ public class DentistUI {
         json.put("getAppointments",true);
         String payload = json.toString();
         final String REQUEST_APPOINTMENTS_TOPIC = "flossboss/dentist/request/appointments/"+email;
-        clientMqtt.publish(REQUEST_APPOINTMENTS_TOPIC, payload,0);
+        clientMqtt.publish(REQUEST_APPOINTMENTS_TOPIC, payload,1);
     }
 
     /** Store MQTT message of appointments in a list*/
@@ -222,7 +222,7 @@ public class DentistUI {
         appointments.sort(Comparator.comparing(Appointment::getDate).thenComparing(Appointment::getTimeFrom));
 
         // Print calender headers
-        System.out.println("----------------------------------------------------------");
+        System.out.println("\n\n\n\n\n----------------------------------------------------------");
         System.out.println("  Day         Date         Time         Available   Booked");
         System.out.println("----------------------------------------------------------");
 
@@ -268,7 +268,7 @@ public class DentistUI {
             availableAppointments.sort(Comparator.comparing(Appointment::getDate).thenComparing(Appointment::getTimeFrom));
 
             // Print calender headers
-            System.out.println("----------------------------------------------");
+            System.out.println("\n\n\n\n\n----------------------------------------------");
             System.out.println("           My Available Appointments          ");
             System.out.println("----------------------------------------------");
             System.out.println("  Day         Date         Time         Booked");
@@ -415,9 +415,9 @@ public class DentistUI {
         System.out.println(payload);    // Debugging
 
         if (isAvailable) {
-            clientMqtt.publish(AVAILABLE, payload, 0);
+            clientMqtt.publish(AVAILABLE, payload, 1);
         } else {
-            clientMqtt.publish(NOT_AVAILABLE, payload, 0);
+            clientMqtt.publish(NOT_AVAILABLE, payload, 1);
         }
     }
 
@@ -498,11 +498,11 @@ public class DentistUI {
         final String CONFIRM_APPOINTMENT = "flossboss/appointment/update/confirm";
         final String CANCEL_APPOINTMENT = "flossboss/appointment/update/canceluser";
         try {
-            clientMqtt.subscribe(REGISTER_CONFIRMATION_TOPIC, 0);
-            clientMqtt.subscribe(LOGIN_CONFIRMATION_TOPIC, 0);
-            clientMqtt.subscribe(GET_APPOINTMENTS_TOPIC, 0);
-            clientMqtt.subscribe(CONFIRM_APPOINTMENT, 0);
-            clientMqtt.subscribe(CANCEL_APPOINTMENT, 0);
+            clientMqtt.subscribe(REGISTER_CONFIRMATION_TOPIC, 1);
+            clientMqtt.subscribe(LOGIN_CONFIRMATION_TOPIC, 1);
+            clientMqtt.subscribe(GET_APPOINTMENTS_TOPIC, 1);
+            clientMqtt.subscribe(CONFIRM_APPOINTMENT, 1);
+            clientMqtt.subscribe(CANCEL_APPOINTMENT, 1);
             clientMqtt.setCallback(new MqttCallback() {
                 @Override
                 public void connectionLost(Throwable throwable) { System.out.println("Connection lost: " + throwable.getMessage());}

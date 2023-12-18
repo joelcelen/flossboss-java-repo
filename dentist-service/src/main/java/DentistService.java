@@ -38,8 +38,8 @@ public class DentistService {
         final String REGISTER_REQUEST_TOPIC = "flossboss/dentist/register/request";
         final String LOGIN_REQUEST_TOPIC = "flossboss/dentist/login/request";
         // Subscribe to topics
-        brokerClient.subscribe(REGISTER_REQUEST_TOPIC, 0);
-        brokerClient.subscribe(LOGIN_REQUEST_TOPIC, 0);
+        brokerClient.subscribe(REGISTER_REQUEST_TOPIC, 1);
+        brokerClient.subscribe(LOGIN_REQUEST_TOPIC, 1);
         brokerClient.setCallback(new MqttCallback() {
             @Override
             public void connectionLost(Throwable throwable) {

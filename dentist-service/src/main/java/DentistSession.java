@@ -102,7 +102,7 @@ public class DentistSession {
         confirmation.put("validEmail", validEmail);
         confirmation.put("clinicExists", clinicExists);
         String payload = confirmation.toString();
-        brokerClient.publish(REGISTER_CONFIRMATION_TOPIC, payload, 0);
+        brokerClient.publish(REGISTER_CONFIRMATION_TOPIC, payload, 1);
     }
 
     /** Handle authentication of a dentist in the database */
@@ -142,7 +142,7 @@ public class DentistSession {
         confirmation.put("confirmed", isLoginSuccessful);
         confirmation.put("dentistName", dentistName);
         String payload = confirmation.toString();
-        brokerClient.publish(LOGIN_CONFIRMATION_TOPIC, payload, 0);
+        brokerClient.publish(LOGIN_CONFIRMATION_TOPIC, payload, 1);
     }
 
     /** Set collection to appointments and retrieve all appointment items from DB for e specific dentist, return JSONArray of appointments */
@@ -159,7 +159,7 @@ public class DentistSession {
         String payload = appointments.toString();
         System.out.println("Publishing appointments to: " + SEND_APPOINTMENTS_TOPIC);
         System.out.println(payload);
-        brokerClient.publish(SEND_APPOINTMENTS_TOPIC, payload, 0);
+        brokerClient.publish(SEND_APPOINTMENTS_TOPIC, payload, 1);
     }
 
     /** Extract payload and publish appointments */
@@ -174,7 +174,7 @@ public class DentistSession {
     private void afterAuthenticatedSubscriptions(BrokerClient brokerClient) {
         if (email!=null || email.isEmpty()) {
             final String APPOINTMENT_REQUEST_TOPIC = "flossboss/dentist/request/appointments/"+email;
-            brokerClient.subscribe(APPOINTMENT_REQUEST_TOPIC, 0);
+            brokerClient.subscribe(APPOINTMENT_REQUEST_TOPIC, 1);
             // Add more subscriptions here that depend on email
         } else {
             System.out.println("Email is not set. Cannot subscribe to specific dentist topics");
