@@ -37,9 +37,11 @@ public class DentistService {
         // Specify topics
         final String REGISTER_REQUEST_TOPIC = "flossboss/dentist/register/request";
         final String LOGIN_REQUEST_TOPIC = "flossboss/dentist/login/request";
+        final String PING = "flossboss/ping/dentist";
         // Subscribe to topics
         brokerClient.subscribe(REGISTER_REQUEST_TOPIC, 0);
         brokerClient.subscribe(LOGIN_REQUEST_TOPIC, 0);
+        brokerClient.subscribe(PING, 0);
         brokerClient.setCallback(new MqttCallback() {
             @Override
             public void connectionLost(Throwable throwable) {
@@ -73,6 +75,8 @@ public class DentistService {
                             JSONObject message = new JSONObject(new String(mqttMessage.getPayload()));
                             dentistSession.handleAppointments(message, brokerClient, databaseClient);
                         }
+                    } else if (topic.equals(PING)) {
+                        brokerClient.publish("flossboss/echo/dentist", "OK", 0);
                     }
                 };
                 new Thread(mqtt).start();
