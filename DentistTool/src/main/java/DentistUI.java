@@ -301,36 +301,68 @@ public class DentistUI {
         // Display appointments so that dentist can see all time slots
         displayAppointments();
 
-        // Prompt dentist to type appointments
-        System.out.println("Do you want to add or delete appointments? Press '+' to add or press '-' to delete.");
-        String addOrDelete = scanner.nextLine();
-        System.out.println("Enter time slots (HH:MM-HH:MM, HH:MM-HH:MM, ...)");
-        String timeSlotInput = scanner.nextLine();
-        String[] timeSlots = timeSlotInput.split(",\\s*");
-        System.out.println("Enter date range (YYYY-MM-DD, YYYY-MM-DD)");
-        String dateRangeInput = scanner.nextLine();
-
-        // For multiple dates
-        if (dateRangeInput.contains(",")) {
-            // Parse the date range
-            String[] dateRangeParts = dateRangeInput.split(",\\s*");
-            LocalDate startDate = LocalDate.parse(dateRangeParts[0]);
-            LocalDate endDate = LocalDate.parse(dateRangeParts[1]);
-
-            // Loop over date range
-            while (!startDate.isAfter(endDate)) {
-                // Loop over time slots and call "changeAvailable()"
-                timeSlotLoop(timeSlots, startDate, addOrDelete, clientMqtt);
-                //Move to next day
-                startDate = startDate.plusDays(1);
+        // Ensure valid action.
+        boolean validAction = false;
+        String addOrDelete = null;
+        while (!validAction) {
+            System.out.println("Do you want to add or delete appointments? Press '+' to add or press '-' to delete.");
+            addOrDelete = scanner.nextLine();
+            validAction = addOrDelete.equals("+") || addOrDelete.equals("-");
+            if (!validAction) {
+                System.out.println("Invalid action. Please try again.");
             }
         }
-        // For single dates
-        else {
-            // Parse a single date
-            LocalDate date = LocalDate.parse(dateRangeInput);
+
+        // Ensure valid time slot format using regex
+        boolean validTimeSlots = false;
+        String[] timeSlots = new String[0];
+        final String TIME_SLOT_FORMAT = "\\d{2}:\\d{2}-\\d{2}:\\d{2}";
+        while (!validTimeSlots) {
+            System.out.println("Enter time slots (HH:MM-HH:MM, HH:MM-HH:MM, ...)");
+            String timeSlotInput = scanner.nextLine();
+            timeSlots = timeSlotInput.split(",\\s*");
+            validTimeSlots = Arrays.stream(timeSlots).allMatch(slot -> slot.matches(TIME_SLOT_FORMAT));
+            if (!validTimeSlots) {
+                System.out.println("Invalid time slot format. Please try again");
+            }
+        }
+
+        // Ensure valid date format using regex
+        boolean validDate = false;
+        LocalDate startDate = null;
+        LocalDate endDate = null;
+        final String DATE_FORMAT = "\\d{4}-\\d{2}-\\d{2}";
+        while (!validDate) {
+            System.out.println("Enter date range (YYYY-MM-DD, YYYY-MM-DD)");
+            String dateRangeInput = scanner.nextLine();
+
+            // Check for single or multiple dates
+            if (dateRangeInput.contains(",")) {
+                // Parse the date range
+                String[] dateRangeParts = dateRangeInput.split(",\\s*");
+                if (dateRangeParts.length == 2 && dateRangeParts[0].matches(DATE_FORMAT) && dateRangeParts[1].matches(DATE_FORMAT)) {
+                    startDate = LocalDate.parse(dateRangeParts[0]);
+                    endDate = LocalDate.parse(dateRangeParts[1]);
+                    validDate = true;
+                }
+            } else {
+                // For single date
+                if (dateRangeInput.matches(DATE_FORMAT)) {
+                    startDate = LocalDate.parse(dateRangeInput);
+                    endDate = startDate;
+                    validDate = true;
+                }
+            }
+            if (!validDate) {
+                System.out.println("Invalid date format. Please try again");
+            }
+        }
+        // Loop over date range
+        while (!startDate.isAfter(endDate)) {
             // Loop over time slots and call "changeAvailable()"
-            timeSlotLoop(timeSlots, date, addOrDelete, clientMqtt);
+            timeSlotLoop(timeSlots, startDate, addOrDelete, clientMqtt);
+            //Move to next day
+            startDate = startDate.plusDays(1);
         }
     }
 
@@ -483,9 +515,9 @@ public class DentistUI {
                     } else if (topic.equals(GET_APPOINTMENTS_TOPIC) && authenticated) {
                         JSONArray jsonArray = new JSONArray(new String(message.getPayload()));
                         appointments = storeAppointments(jsonArray);
-                    } else if (topic.equals(CONFIRM_APPOINTMENT) && authenticated) {
+                    } else if (topic.startsWith(CONFIRM_APPOINTMENT) && authenticated) {
                         parseAppointmentPayloadAndUpdate(message, true);
-                    } else if (topic.equals(CANCEL_APPOINTMENT) && authenticated) {
+                    } else if (topic.startsWith(CANCEL_APPOINTMENT) && authenticated) {
                         parseAppointmentPayloadAndUpdate(message, false);
                     }
                 }
