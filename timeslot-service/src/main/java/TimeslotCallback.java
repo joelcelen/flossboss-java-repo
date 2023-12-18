@@ -3,14 +3,25 @@ import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class TimeslotCallback implements MqttCallback {
 
     private final TimeslotCreator timeslotCreator;
     private final BrokerClient brokerClient;
+    private final ExecutorService healthThread;
+    private final HealthHandler healthHandler;
 
     public TimeslotCallback(BrokerClient brokerClient){
         this.timeslotCreator = new TimeslotCreator();
         this.brokerClient = brokerClient;
+        this.healthThread = Executors.newSingleThreadExecutor(runnable -> {
+            Thread thread = new Thread(runnable);
+            thread.setDaemon(true);
+            return thread;
+        });
+        this.healthHandler = new HealthHandler();
     }
 
     @Override
@@ -54,14 +65,14 @@ public class TimeslotCallback implements MqttCallback {
         } else if (topic.equals(Topic.SHUTDOWN.getStringValue())) {
             ShutdownManager.shutdownRequested = true;
 
+        } else if (topic.equals(Topic.PING.getStringValue())) {
+            healthThread.submit(healthHandler::echo);
         }
     }
 
     @Override
     public void deliveryComplete(IMqttDeliveryToken token) {
-        if (token.isComplete()) {
-            System.out.println("Message delivered successfully.");
-        } else {
+        if (!token.isComplete()) {
             System.out.println("Message delivery failed.");
             if (token.getException() != null) {
                 token.getException().printStackTrace();
