@@ -7,7 +7,6 @@ import java.util.concurrent.Executors;
 public class AppointmentCallback implements MqttCallback {
 
     private final ExecutorService threadPool;
-    private final ExecutorService healthThread;
     private final AppointmentHandler appointmentHandler;
     private final BrokerClient brokerClient;
     private final HealthHandler healthHandler;
@@ -16,11 +15,6 @@ public class AppointmentCallback implements MqttCallback {
         this.threadPool = threadPool;
         this.appointmentHandler = new AppointmentHandler();
         this.brokerClient = BrokerClient.getInstance();
-        this.healthThread = Executors.newSingleThreadExecutor(runnable -> {
-            Thread thread = new Thread(runnable);
-            thread.setDaemon(true);
-            return thread;
-        });
         this.healthHandler = new HealthHandler();
     }
 
@@ -57,7 +51,12 @@ public class AppointmentCallback implements MqttCallback {
             ShutdownManager.shutdownRequested = true;
 
         } else if (topic.equals(Topic.PING.getStringValue())) {
-            healthThread.submit(healthHandler::echo);
+            // Create separate thread to handle pings
+            Thread healthThread = new Thread(healthHandler::echo);
+            // Set the thread as a daemon so that it won't prevent the application from exiting
+            healthThread.setDaemon(true);
+
+            healthThread.start();
         }
     }
 

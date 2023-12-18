@@ -3,24 +3,15 @@ import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 public class TimeslotCallback implements MqttCallback {
 
     private final TimeslotCreator timeslotCreator;
     private final BrokerClient brokerClient;
-    private final ExecutorService healthThread;
     private final HealthHandler healthHandler;
 
     public TimeslotCallback(BrokerClient brokerClient){
         this.timeslotCreator = new TimeslotCreator();
         this.brokerClient = brokerClient;
-        this.healthThread = Executors.newSingleThreadExecutor(runnable -> {
-            Thread thread = new Thread(runnable);
-            thread.setDaemon(true);
-            return thread;
-        });
         this.healthHandler = new HealthHandler();
     }
 
@@ -66,7 +57,12 @@ public class TimeslotCallback implements MqttCallback {
             ShutdownManager.shutdownRequested = true;
 
         } else if (topic.equals(Topic.PING.getStringValue())) {
-            healthThread.submit(healthHandler::echo);
+            // Create separate thread to handle pings
+            Thread healthThread = new Thread(healthHandler::echo);
+            // Set the thread as a daemon so that it won't prevent the application from exiting
+            healthThread.setDaemon(true);
+
+            healthThread.start();
         }
     }
 
