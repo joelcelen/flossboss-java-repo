@@ -3,19 +3,15 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 import org.bson.Document;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
-
-import java.util.concurrent.ExecutorService;
 import static org.mockito.Mockito.*;
 
 public class AppointmentHandlerTest {
 
     private final String samplePayload = "{\"_id\":\"sampleId\",\"_userId\":\"sampleUserId\",\"_clinicId\":\"sampleUserId\"}";
-    private ExecutorService threadPoolMock;
     private PendingQueue pendingQueueMock;
     private BrokerClient brokerClientMock;
     private DatabaseClient databaseClientMock;
@@ -27,13 +23,12 @@ public class AppointmentHandlerTest {
     @Before
     public void setup(){
         // mocking classes that are needed for the tests
-        this.threadPoolMock = mock(ExecutorService.class);
         this.pendingQueueMock = mock(PendingQueue.class);
         this.brokerClientMock = mock(BrokerClient.class);
         this.databaseClientMock = mock(DatabaseClient.class);
 
         // spy instance of the AppointmentHandler class
-        this.appointmentHandler = spy(new AppointmentHandler(threadPoolMock, pendingQueueMock, brokerClientMock, databaseClientMock));
+        this.appointmentHandler = spy(new AppointmentHandler(pendingQueueMock, brokerClientMock, databaseClientMock));
 
         // InOrder object to run method calls sequential
         this.sequential = inOrder(pendingQueueMock, brokerClientMock, databaseClientMock);
@@ -45,66 +40,6 @@ public class AppointmentHandlerTest {
         this.brokerClientMock.disconnect();
         this.pendingQueueMock.resetState();
         this.appointmentHandler = null;
-    }
-
-    /** Test for incoming message to subscribe/pending topic **/
-    @Test
-    public void pendingArrivedTest() {
-        logger.error(TEST_MARKER, "PendingArrivedTest Running...");
-        // Simulate an incoming message on the SUBSCRIBE_PENDING topic
-        appointmentHandler.messageArrived(Topic.SUBSCRIBE_PENDING.getStringValue(), new MqttMessage(samplePayload.getBytes()));
-
-        // Verify that the thread pool submitted a task
-        verify(threadPoolMock, times(1)).submit(any(Runnable.class));
-        logger.error(TEST_MARKER, "PendingArrivedTest Succeeded!");
-    }
-
-    /** Test for incoming message to subscribe/cancel topic **/
-    @Test
-    public void cancelArrivedTest() {
-        logger.error(TEST_MARKER, "CancelArrivedTest Running...");
-        // Simulate an incoming message on the SUBSCRIBE_CANCEL topic
-        appointmentHandler.messageArrived(Topic.SUBSCRIBE_CANCEL.getStringValue(), new MqttMessage(samplePayload.getBytes()));
-
-        // Verify that the thread pool submitted a task
-        verify(threadPoolMock, times(1)).submit(any(Runnable.class));
-        logger.error(TEST_MARKER, "CancelArrivedTest Succeeded!");
-    }
-
-    /** Test for incoming message to subscribe/confirm topic **/
-    @Test
-    public void confirmArrivedTest() {
-        logger.error(TEST_MARKER, "ConfirmArrivedTest Running...");
-        // Simulate an incoming message on the SUBSCRIBE_CONFIRM topic
-        appointmentHandler.messageArrived(Topic.SUBSCRIBE_CONFIRM.getStringValue(), new MqttMessage(samplePayload.getBytes()));
-
-        // Verify that the thread pool submitted a task
-        verify(threadPoolMock, times(1)).submit(any(Runnable.class));
-        logger.error(TEST_MARKER, "ConfirmArrivedTest Succeeded!");
-    }
-
-    /** Test for incoming message to subscribe/available topic **/
-    @Test
-    public void availableArrivedTest() {
-        logger.error(TEST_MARKER, "AvailableArrivedTest Running...");
-        // Simulate an incoming message on the SUBSCRIBE_AVAILABLE topic
-        appointmentHandler.messageArrived(Topic.SUBSCRIBE_AVAILABLE.getStringValue(), new MqttMessage(samplePayload.getBytes()));
-
-        // Verify that the thread pool submitted a task
-        verify(threadPoolMock, times(1)).submit(any(Runnable.class));
-        logger.error(TEST_MARKER, "AvailableArrivedTest Succeeded!");
-    }
-
-    /** Test for incoming message to the wrong topic **/
-    @Test
-    public void wrongTopicTest() {
-        logger.error(TEST_MARKER, "WrongTopicTest Running...");
-        // Simulate an incoming message on the wrong topic
-        appointmentHandler.messageArrived("wrong/topic", new MqttMessage(samplePayload.getBytes()));
-
-        // Verify that no thread in the pool was submitted
-        verifyNoInteractions(threadPoolMock);
-        logger.error(TEST_MARKER, "WrongTopicTest Succeeded!");
     }
 
     /** Validity test case for handlePending() method **/

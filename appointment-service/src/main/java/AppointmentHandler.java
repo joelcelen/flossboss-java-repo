@@ -6,63 +6,22 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import java.util.concurrent.ExecutorService;
 
-public class AppointmentHandler implements MqttCallback {
+public class AppointmentHandler{
 
-    private PendingQueue pendingQueue = PendingQueue.getInstance();
-    private BrokerClient brokerClient = BrokerClient.getInstance();
-    private DatabaseClient databaseClient = DatabaseClient.getInstance();
-    private final ExecutorService threadPool;
+    private PendingQueue pendingQueue;
+    private BrokerClient brokerClient;
+    private DatabaseClient databaseClient;
 
-    public AppointmentHandler(ExecutorService threadPool){
-        this.threadPool = threadPool;
+    public AppointmentHandler(){
+        this.pendingQueue = PendingQueue.getInstance();
+        this.brokerClient  = BrokerClient.getInstance();
+        this.databaseClient = DatabaseClient.getInstance();
     }
 
-    public AppointmentHandler(ExecutorService threadPool, PendingQueue pendingQueue, BrokerClient brokerClient, DatabaseClient databaseClient) {
-        this.threadPool = threadPool;
+    public AppointmentHandler(PendingQueue pendingQueue, BrokerClient brokerClient, DatabaseClient databaseClient) {
         this.pendingQueue = pendingQueue;
         this.brokerClient = brokerClient;
         this.databaseClient = databaseClient;
-    }
-    @Override
-    public void connectionLost(Throwable throwable) {
-        brokerClient.reconnect();
-        brokerClient.setCallback(this);
-    }
-
-    /** Handles incoming messages depending on topic, thread pool assigns one thread to the operation  **/
-    @Override
-    public void messageArrived(String topic, MqttMessage payload){
-
-        if(topic.equals(Topic.SUBSCRIBE_PENDING.getStringValue())){ // pending requests
-            threadPool.submit(()-> handlePending(payload.toString()));
-
-        }else if (topic.equals(Topic.SUBSCRIBE_CANCEL.getStringValue())){ // cancel requests
-            threadPool.submit(()-> handleCancel(payload.toString()));
-
-         }else if (topic.equals(Topic.SUBSCRIBE_CANCEL_USER.getStringValue())){ // cancel booked from user
-            threadPool.submit(()-> handleUserCancel(payload.toString()));
-
-         }else if (topic.equals(Topic.SUBSCRIBE_CANCEL_DENTIST.getStringValue())){ // cancel booked from dentist
-            threadPool.submit(()-> handleDentistCancel(payload.toString()));
-
-        }else if (topic.equals(Topic.SUBSCRIBE_CONFIRM.getStringValue())) { // confirm requests
-            threadPool.submit(()-> handleConfirm(payload.toString()));
-
-        } else if (topic.equals(Topic.SUBSCRIBE_AVAILABLE.getStringValue())) { // availability requests
-            threadPool.submit(()->handleAvailable(payload.toString()));
-        }
-    }
-
-    @Override
-    public void deliveryComplete(IMqttDeliveryToken token) {
-        if (token.isComplete()) {
-            System.out.println("Message delivered successfully.");
-        } else {
-            System.out.println("Message delivery failed.");
-            if (token.getException() != null) {
-                token.getException().printStackTrace();
-            }
-        }
     }
 
     /** Handles incoming pending requests **/
