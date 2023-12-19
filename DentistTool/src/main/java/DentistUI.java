@@ -105,8 +105,14 @@ public class DentistUI {
                     }
                 }
                 case 'X' | 'x' -> {
-                    running = false;
-                    System.exit(0);
+                    try {
+                        running = false;
+                        clientMqtt.disconnect();
+                        System.exit(0);
+                    } catch (MqttException e) {
+                        throw new RuntimeException(e);
+                    }
+
                 }
             }
         }

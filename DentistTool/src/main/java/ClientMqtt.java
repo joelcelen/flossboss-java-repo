@@ -24,6 +24,10 @@ public class ClientMqtt {
         options.setPassword(password.toCharArray());
         mqttClient.connect(options);
     }
+    public void disconnect() throws MqttException{
+        mqttClient.disconnect();
+        System.out.println("MQTT Disconnected");
+    }
 
     // Publish function, takes topic and message as argument. Publishes a payload that is converted to a byte array
     public void publish(String topic, String payload, int qos) throws MqttException {

@@ -4,6 +4,8 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class DentistService {
 
@@ -12,6 +14,11 @@ public class DentistService {
      *  data integrity. It's used to store and retrieve DentistSession objects for each
      *  unique email, ensuring safe operations in a multithreaded environment.*/
     private final Map<String, DentistSession> sessions = new ConcurrentHashMap<>();
+    private final ExecutorService threadPool; // ExecutorService for managing threads
+
+    public DentistService() {
+        this.threadPool = Executors.newFixedThreadPool(8);
+    }
 
     public static void main(String[] args){
         DentistService dentistService = new DentistService();
@@ -47,17 +54,15 @@ public class DentistService {
             }
             @Override
             public void messageArrived(String topic, MqttMessage mqttMessage){
-                // Put mqtt callback in its own thread using runnable so that it is continuously listening for messages.
-                Runnable mqtt = () -> {
+                // Define a task to be executed in a separate thread. This is necessary to handle MQTT messages concurrently and efficiently.
+                Runnable mqttTask = () -> {
                     if (topic.equals(REGISTER_REQUEST_TOPIC) || topic.equals(LOGIN_REQUEST_TOPIC)) {
                         // Parse payload into json object
                         JSONObject message = new JSONObject(new String(mqttMessage.getPayload()));
-                        // For register and login request, email is included in the message (payload)
+                        // Retrieve the message payload
                         String email = message.getString("email");
-                        /** computeIfAbsent is a method provided by the ConcurrentHashMap
-                         *  Two parameters: email and a lamdba function
-                         *  If the email is not already a key in the sessions map, the lambda function (k -> new DentistSession(email)) is executed. This function creates a new DentistSession object with the email.
-                         *  If the email already exists as a key in the map, computeIfAbsent returns the existing DentistSession associated with that email. */
+                        // Use ConcurrentHashMap's computeIfAbsent to handle session management.
+                        // This ensures that a new DentistSession is created only if the email is not already associated with a session.
                         DentistSession dentistSession = sessions.computeIfAbsent(email, k -> new DentistSession(email));
 
                         if (topic.equals(REGISTER_REQUEST_TOPIC)) {
@@ -75,7 +80,9 @@ public class DentistService {
                         }
                     }
                 };
-                new Thread(mqtt).start();
+                // Submit the task for execution to the ExecutorService's thread pool.
+                // This allows for efficient management of multiple concurrent tasks without overwhelming the system.
+                threadPool.submit(mqttTask);
             }
             @Override
             public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
@@ -83,5 +90,4 @@ public class DentistService {
             }
         });
     }
-
 }
