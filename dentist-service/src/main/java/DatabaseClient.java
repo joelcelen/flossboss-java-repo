@@ -1,5 +1,4 @@
 import static com.mongodb.client.model.Filters.eq;
-
 import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
@@ -63,32 +62,6 @@ public class DatabaseClient {
         }
     }
 
-    /** Reads an item based on the item's ID and returns it as JSON**/
-    public String readItem(String id) {
-        String query;
-        if(existsItem(id)){
-            Document item = collection.find(eq("_id", new ObjectId(id))).first();
-            query = item.toJson();
-        }else{
-            query = "No item with specified ID found";
-        }
-        return query;
-    }
-
-    /** Updates a single row of an item to your specified value **/
-    public void updateItem(String id, String attribute, String newValue){
-        if(this.existsItem(id)){
-            UpdateResult result = collection.updateOne(Filters.eq("_id", new ObjectId(id)), Updates.set(attribute,newValue));
-            if(result.wasAcknowledged()){
-                System.out.println("Item successfully updated!");
-            }else{
-                System.out.println("Item was not updated.");
-            }
-        }else{
-            System.out.println("Item not found.");
-        }
-    }
-
     /** Deletes item from specified collection based on item ID **/
     public void deleteItem(String id){
         if(this.existsItem(id)){
@@ -105,8 +78,7 @@ public class DatabaseClient {
 
     /** Find item in DB based on ID, if item found it returns ture, else it returns false **/
     public boolean existsItem(String id) {
-        FindIterable<Document> result = collection.find(eq("_id", new ObjectId(id))
-        );
+        FindIterable<Document> result = collection.find(eq("_id", new ObjectId(id)));
         // Check if any documents match the query
         return result.iterator().hasNext();
     }
@@ -165,6 +137,23 @@ public class DatabaseClient {
         }
         return appointments;
     }
+
+    /** Find item in DB based on id (Used in tests only) */
+    public Document testFindItemById(String id) {
+        return collection.find(eq("_id", new ObjectId(id))).first();
+    }
+    /** Gets the auto generated ID based on email (Used in tests only) **/
+    public String testGetId(String name){
+        String id;
+        Document query = collection.find(eq("name", name)).first();
+        if (query != null){
+            id = query.get("_id").toString();
+        } else {
+            id = "No matching item was found.";
+        }
+        return id;
+    }
+
 
     /** Helper method to load in the environmentals from the .txt file **/
     private void loadURI() {
