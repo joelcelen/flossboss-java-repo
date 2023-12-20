@@ -1,7 +1,5 @@
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.bson.Document;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -10,19 +8,13 @@ import java.util.concurrent.ExecutorService;
 public class NotificationCallback implements MqttCallback {
 
     //private final ExecutorService THREAD_POOL;
-    private final DatabaseClient DATABASE_CLIENT;
-
     private final BrokerClient BROKER_CLIENT;
-    private final EmailFormatter EMAIL_FORMATTER;
-    private final EmailSender EMAIL_SENDER;
+    private final NotificationHandler NOTIFICATION_HANDLER;
 
     public NotificationCallback(ExecutorService threadPool){
         //this.THREAD_POOL = threadPool;
-        this.DATABASE_CLIENT = DatabaseClient.getInstance();
         this.BROKER_CLIENT = BrokerClient.getInstance();
-        this.EMAIL_FORMATTER = new EmailFormatter();
-        this.EMAIL_SENDER = new EmailSender();
-
+        this.NOTIFICATION_HANDLER = new NotificationHandler();
     }
     @Override
     public void connectionLost(Throwable cause) {
@@ -30,104 +22,20 @@ public class NotificationCallback implements MqttCallback {
     }
 
     @Override
-    public void messageArrived(String topic, MqttMessage message) throws Exception {
+    public void messageArrived(String topic, MqttMessage message){
+        String payload = message.toString();
 
-        if(isValidPayload(message.toString())) {
-            if (topic.startsWith(Topic.CONFIRM.getStringValue())) {
-                    try {
-                        JsonObject appointment = JsonParser.parseString(message.toString()).getAsJsonObject();
-
-                        String subject = "Confirmation Dental Appointment";
-
-                        DATABASE_CLIENT.setCollection("users");
-                        Document user = DATABASE_CLIENT.readItem(appointment.get("_userId").getAsString());
-                        DATABASE_CLIENT.setCollection("clinics");
-                        Document clinic = DATABASE_CLIENT.readItem(appointment.get("_clinicId").getAsString());
-                        DATABASE_CLIENT.setCollection("users");
-
-                        String name = user.getString("name");
-                        String clinicName = clinic.getString("name");
-                        JsonElement dateElement = appointment.get("date");
-                        JsonObject dateObject = dateElement.getAsJsonObject();
-                        String date = dateObject.get("$date").getAsString();
-                        String timeFrom = appointment.get("timeFrom").getAsString();
-                        String timeTo = appointment.get("timeTo").getAsString();
-                        String time = timeFrom + " - " + timeTo;
-                        String location = clinic.getString("address");
-
-                        String body = EMAIL_FORMATTER.confirmation(name, clinicName, date, time, location);
-
-                        String from = ConfigHandler.getVariable("GMAIL_USER");
-                        String to = user.getString("email");
-
-                        EMAIL_SENDER.sendMessage(to, from, subject, body);
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-            } else if (topic.startsWith(Topic.CANCEL_DENTIST.getStringValue())) {
-                    try {
-                        JsonObject appointment = JsonParser.parseString(message.toString()).getAsJsonObject();
-
-                        String subject = "Dentist Cancellation Appointment";
-
-                        DATABASE_CLIENT.setCollection("users");
-                        Document user = DATABASE_CLIENT.readItem(appointment.get("_userId").getAsString());
-                        DATABASE_CLIENT.setCollection("clinics");
-                        Document clinic = DATABASE_CLIENT.readItem(appointment.get("_clinicId").getAsString());
-                        DATABASE_CLIENT.setCollection("users");
-
-                        String name = user.getString("name");
-                        String clinicName = clinic.getString("name");
-                        JsonElement dateElement = appointment.get("date");
-                        JsonObject dateObject = dateElement.getAsJsonObject();
-                        String date = dateObject.get("$date").getAsString();
-                        String timeFrom = appointment.get("timeFrom").getAsString();
-                        String timeTo = appointment.get("timeTo").getAsString();
-                        String time = timeFrom + " - " + timeTo;
-                        String location = clinic.getString("address");
-
-                        String body = EMAIL_FORMATTER.cancellationDentist(name, clinicName, date, time, location);
-
-                        String from = ConfigHandler.getVariable("GMAIL_USER");
-                        String to = user.getString("email");
-
-                        EMAIL_SENDER.sendMessage(to, from, subject, body);
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-            } else if (topic.startsWith(Topic.CANCEL_USER.getStringValue())) {
-                    try {
-                        JsonObject appointment = JsonParser.parseString(message.toString()).getAsJsonObject();
-
-                        String subject = "Cancellation Dental Appointment";
-
-                        DATABASE_CLIENT.setCollection("users");
-                        Document user = DATABASE_CLIENT.readItem(appointment.get("_userId").getAsString());
-                        DATABASE_CLIENT.setCollection("clinics");
-                        Document clinic = DATABASE_CLIENT.readItem(appointment.get("_clinicId").getAsString());
-                        DATABASE_CLIENT.setCollection("users");
-
-                        String name = user.getString("name");
-                        String clinicName = clinic.getString("name");
-                        JsonElement dateElement = appointment.get("date");
-                        JsonObject dateObject = dateElement.getAsJsonObject();
-                        String date = dateObject.get("$date").getAsString();
-                        String timeFrom = appointment.get("timeFrom").getAsString();
-                        String timeTo = appointment.get("timeTo").getAsString();
-                        String time = timeFrom + " - " + timeTo;
-                        String location = clinic.getString("address");
-
-                        String body = EMAIL_FORMATTER.cancellationUser(name, clinicName, date, time, location);
-
-                        String from = ConfigHandler.getVariable("GMAIL_USER");
-                        String to = user.getString("email");
-
-                        EMAIL_SENDER.sendMessage(to, from, subject, body);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+        if (topic.startsWith(Topic.CONFIRM.getStringValue())) {
+            if (isValidPayload(payload)){
+                NOTIFICATION_HANDLER.confirmation(payload);
+            }
+        } else if (topic.startsWith(Topic.CANCEL_DENTIST.getStringValue())) {
+            if (isValidPayload(payload)){
+                NOTIFICATION_HANDLER.dentistCancellation(payload);
+            }
+        } else if (topic.startsWith(Topic.CANCEL_USER.getStringValue())) {
+            if (isValidPayload(payload)){
+                NOTIFICATION_HANDLER.userCancellation(payload);
             }
         }
     }
@@ -146,6 +54,7 @@ public class NotificationCallback implements MqttCallback {
     private boolean isValidPayload(String payload){
         JsonObject jsonPayload = JsonParser.parseString(payload).getAsJsonObject();
 
+        // Check that every attribute of the appointment is present.
         if (jsonPayload.has("_id")
                 && jsonPayload.has("_clinicId")
                 && jsonPayload.has("_dentistId")
