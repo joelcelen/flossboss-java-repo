@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class BrokerClient {
@@ -15,7 +16,10 @@ public class BrokerClient {
     private char[] hivePw;
 
     public BrokerClient(){
-        this.getVariables();
+        this.clientName = String.format("NotificationService_%s", UUID.randomUUID());
+        this.hiveUrl = ConfigHandler.getVariable("HIVE_URL");
+        this.hiveUser = ConfigHandler.getVariable("HIVE_USER");
+        this.hivePw = ConfigHandler.getVariable("HIVE_PW").toCharArray();
     }
 
     // Connection using the config file.
@@ -79,28 +83,5 @@ public class BrokerClient {
         System.out.println("cause " + me.getCause());
         System.out.println("exception " + me);
         me.printStackTrace();
-    }
-
-    // Helper method to get the environmental variables from a txt file
-    private void getVariables() {
-
-        String path = "hiveconfig.txt";
-
-        try (
-                InputStream inputStream = BrokerClient.class.getClassLoader().getResourceAsStream(path)) {
-            if (inputStream == null) {
-                System.out.println("Cannot find "+path+" in classpath");
-            }
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-            String[] configLines = reader.lines().collect(Collectors.joining("\n")).split("\n");
-
-            // These need to be in the correct order in the txt file.
-            this.clientName = configLines[0].trim();
-            this.hiveUrl = configLines[1].trim();
-            this.hiveUser = configLines[2].trim();
-            this.hivePw = configLines[3].trim().toCharArray();
-        } catch (IOException e) {
-            System.out.println("Error configuring MQTT client: " + e.getMessage());
-        }
     }
 }

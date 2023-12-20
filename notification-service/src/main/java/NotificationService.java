@@ -10,7 +10,7 @@ public class NotificationService {
         brokerClient.connect();
 
         // Create Database Client with placeholder URI, testing db so no need to mask
-        DatabaseClient databaseClient = new DatabaseClient("mongodb+srv://flossboss-test:vaSEAvtHSumlixAv@test-cluster.wlvtb6y.mongodb.net/?retryWrites=true&w=majority");
+        DatabaseClient databaseClient = new DatabaseClient(ConfigHandler.getVariable("ATLAS_TEST_URI"));
 
         // Connect to the specific DB within the cluster
         databaseClient.connect("services-db");

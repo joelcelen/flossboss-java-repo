@@ -27,7 +27,7 @@ public class DatabaseClient {
      * Constructor that uses URI specified in environmental file
      **/
     public DatabaseClient() {
-        this.loadURI();
+        this.uri = ConfigHandler.getVariable("ATLAS_URI");
     }
 
     /**
@@ -37,31 +37,23 @@ public class DatabaseClient {
         this.uri = uri;
     }
 
-    /**
-     * Creates the MongoClient and takes a specific DB within your cluster
-     **/
+    /** Creates the MongoClient and takes a specific DB within your cluster **/
     public void connect(String db) {
         this.mongoClient = MongoClients.create(uri);
         this.database = mongoClient.getDatabase(db);
     }
 
-    /**
-     * Disconnect method
-     **/
+    /** Disconnect method **/
     public void disconnect() {
         this.mongoClient.close();
     }
 
-    /**
-     * Set the collection that you currently want to operate on
-     **/
+    /** Set the collection that you currently want to operate on **/
     public void setCollection(String collection) {
         this.collection = database.getCollection(collection);
     }
 
-    /**
-     * Creates a new entry in your database collection
-     **/
+    /** Creates a new entry in your database collection **/
     public void createItem(Document item) {
         InsertOneResult result = collection.insertOne(item);
 
@@ -72,9 +64,7 @@ public class DatabaseClient {
         }
     }
 
-    /**
-     * Reads an item based on the item's ID and returns it as JSON
-     **/
+    /** Reads an item based on the item's ID and returns it as JSON **/
     public String readItem(String id) {
 
         String query;
@@ -88,9 +78,7 @@ public class DatabaseClient {
         return query;
     }
 
-    /**
-     * Updates a single row of an item to your specified value
-     **/
+    /** Updates a single row of an item to your specified value **/
     public void updateItem(String id, String attribute, String newValue) {
 
         if (this.existsItem(id)) {
@@ -105,9 +93,7 @@ public class DatabaseClient {
         }
     }
 
-    /**
-     * Deletes item from specified collection based on item ID
-     **/
+    /** Deletes item from specified collection based on item ID **/
     public void deleteItem(String id) {
         if (this.existsItem(id)) {
             DeleteResult result = this.collection.deleteOne(eq("_id", new ObjectId(id)));
@@ -121,9 +107,7 @@ public class DatabaseClient {
         }
     }
 
-    /**
-     * Find item in DB based on ID, if item found it returns ture, else it returns false
-     **/
+    /** Find item in DB based on ID, if item found it returns ture, else it returns false **/
     public boolean existsItem(String id) {
 
         FindIterable<Document> result = collection.find(eq("_id", new ObjectId(id))
@@ -133,9 +117,7 @@ public class DatabaseClient {
         return result.iterator().hasNext();
     }
 
-    /**
-     * Gets the auto generated ID based on name
-     **/
+    /** Gets the auto generated ID based on name **/
     public String getID(String name) {
         String id;
         Document query = collection.find(eq("service_name", name)).first();
@@ -146,27 +128,5 @@ public class DatabaseClient {
         }
 
         return id;
-    }
-
-    /**
-     * Helper method to load in the environmentals from the .txt file
-     **/
-    private void loadURI() {
-
-        String path = "atlasconfig.txt";
-
-        try (
-                InputStream inputStream = BrokerClient.class.getClassLoader().getResourceAsStream(path)) {
-            if (inputStream == null) {
-                System.out.println("Cannot find " + path + " in classpath");
-            }
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-            String[] configLines = reader.lines().collect(Collectors.joining("\n")).split("\n");
-
-            // These need to be in the correct order in the txt file.
-            this.uri = configLines[0].trim();
-        } catch (IOException e) {
-            System.out.println("Error configuring MongoDB client: " + e.getMessage());
-        }
     }
 }
