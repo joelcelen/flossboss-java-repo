@@ -1,8 +1,8 @@
 public class EmailFormatter {
 
-    public String confirmation(String name, String clinic, String date, String time, String location){
+    public String confirmation(EmailContent content){
         return """
-                Hello %s.
+                Hello %s,
                 
                 Here is the confirmation for your dental appointment.
                 
@@ -15,12 +15,12 @@ public class EmailFormatter {
                 
                 Have a wonderful day,
                 Team FlossBoss
-                """.formatted(name, clinic, date, time, location);
+                """.formatted(content.getUserName(), content.getClinicName(), content.getDate(), content.getTime(), content.getLocation());
     }
 
-    public String cancellationUser(String name, String clinic, String date, String time, String location){
+    public String userCancellation(EmailContent content){
         return """
-                Hello %s.
+                Hello %s,
                 
                 Your booked appointment is now cancelled.
                 
@@ -31,12 +31,12 @@ public class EmailFormatter {
                 
                 Have a wonderful day,
                 Team FlossBoss
-                """.formatted(name, clinic, date, time, location);
+                """.formatted(content.getUserName(), content.getClinicName(), content.getDate(), content.getTime(), content.getLocation());
     }
 
-    public String cancellationDentist(String name, String clinic, String date, String time, String location){
+    public String dentistCancellation(EmailContent content){
         return """
-                Hello %s.
+                Hello %s,
                 
                 We are very sorry to inform you that the following appointment has been canceled by your dentist.
                 
@@ -49,6 +49,6 @@ public class EmailFormatter {
                 
                 Have a wonderful day,
                 Team FlossBoss
-                """.formatted(name, clinic, date, time, location);
+                """.formatted(content.getUserName(), content.getClinicName(), content.getDate(), content.getTime(), content.getLocation());
     }
 }

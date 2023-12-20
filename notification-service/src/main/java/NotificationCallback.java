@@ -7,14 +7,14 @@ import java.util.concurrent.ExecutorService;
 
 public class NotificationCallback implements MqttCallback {
 
-    private final ExecutorService THREAD_POOL;
-    private final BrokerClient BROKER_CLIENT;
-    private final NotificationHandler NOTIFICATION_HANDLER;
+    private final ExecutorService threadPool;
+    private final BrokerClient brokerClient;
+    private final NotificationHandler handler;
 
     public NotificationCallback(ExecutorService threadPool){
-        this.THREAD_POOL = threadPool;
-        this.BROKER_CLIENT = BrokerClient.getInstance();
-        this.NOTIFICATION_HANDLER = new NotificationHandler();
+        this.threadPool = threadPool;
+        this.brokerClient = BrokerClient.getInstance();
+        this.handler = new NotificationHandler();
     }
     @Override
     public void connectionLost(Throwable cause) {
@@ -27,15 +27,15 @@ public class NotificationCallback implements MqttCallback {
 
         if (topic.startsWith(Topic.CONFIRM.getStringValue())) {
             if (isValidPayload(payload)){
-                this.THREAD_POOL.submit(()->NOTIFICATION_HANDLER.confirmation(payload));
+                this.threadPool.submit(()-> handler.confirmation(payload));
             }
         } else if (topic.startsWith(Topic.CANCEL_DENTIST.getStringValue())) {
             if (isValidPayload(payload)){
-                this.THREAD_POOL.submit(()->NOTIFICATION_HANDLER.dentistCancellation(payload));
+                this.threadPool.submit(()-> handler.dentistCancellation(payload));
             }
         } else if (topic.startsWith(Topic.CANCEL_USER.getStringValue())) {
             if (isValidPayload(payload)){
-                this.THREAD_POOL.submit(()->NOTIFICATION_HANDLER.userCancellation(payload));
+                this.threadPool.submit(()-> handler.userCancellation(payload));
             }
         }
     }
@@ -74,8 +74,7 @@ public class NotificationCallback implements MqttCallback {
 
     /** Reconnection logic **/
     private void reconnect(){
-        BROKER_CLIENT.reconnect();
-        BROKER_CLIENT.setCallback(this);
+        brokerClient.reconnect();
+        brokerClient.setCallback(this);
     }
-
 }

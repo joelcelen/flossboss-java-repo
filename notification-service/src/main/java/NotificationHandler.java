@@ -1,48 +1,39 @@
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.bson.Document;
 
 public class NotificationHandler {
 
-    private final UserDao USER_DAO;
-    private final ClinicDao CLINIC_DAO;
-    private final EmailFormatter EMAIL_FORMATTER;
-    private final EmailSender EMAIL_SENDER;
+    private final UserDao userDao;
+    private final ClinicDao clinicDao;
+    private final EmailFormatter emailFormatter;
+    private final EmailSender emailSender;
 
     public NotificationHandler(){
-        this.CLINIC_DAO = ClinicDao.getInstance();
-        this.USER_DAO = UserDao.getInstance();
-        this.EMAIL_FORMATTER = new EmailFormatter();
-        this.EMAIL_SENDER = new EmailSender();
+        this.clinicDao = ClinicDao.getInstance();
+        this.userDao = UserDao.getInstance();
+        this.emailFormatter = new EmailFormatter();
+        this.emailSender = new EmailSender();
     }
 
     /** Handles confirmation **/
     public void confirmation(String payload){
         try {
+            // Parses appointment from payload and finds associated clinic and user
             JsonObject appointment = JsonParser.parseString(payload).getAsJsonObject();
+            Document user = userDao.readItem(appointment.get("_userId").getAsString());
+            Document clinic = clinicDao.readItem(appointment.get("_clinicId").getAsString());
 
+            // Compiles all info into a java object
+            EmailContent contactInfo = new EmailContent(user, clinic, appointment);
+
+            // Formats the email content
             String subject = "Confirmation Dental Appointment";
-
-            Document user = USER_DAO.readItem(appointment.get("_userId").getAsString());
-            Document clinic = CLINIC_DAO.readItem(appointment.get("_clinicId").getAsString());
-
-            String name = user.getString("name");
-            String clinicName = clinic.getString("name");
-            JsonElement dateElement = appointment.get("date");
-            JsonObject dateObject = dateElement.getAsJsonObject();
-            String date = dateObject.get("$date").getAsString();
-            String timeFrom = appointment.get("timeFrom").getAsString();
-            String timeTo = appointment.get("timeTo").getAsString();
-            String time = timeFrom + " - " + timeTo;
-            String location = clinic.getString("address");
-
-            String body = EMAIL_FORMATTER.confirmation(name, clinicName, date, time, location);
-
+            String body = emailFormatter.confirmation(contactInfo);
             String from = ConfigHandler.getVariable("GMAIL_USER");
-            String to = user.getString("email");
 
-            EMAIL_SENDER.sendMessage(to, from, subject, body);
+            // Sends the email
+            emailSender.sendMessage(contactInfo.getUserEmail(), from, subject, body);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -52,29 +43,20 @@ public class NotificationHandler {
     /** Handles cancellation made by dentist **/
     public void dentistCancellation(String payload){
         try {
+            // Parses appointment from payload and finds associated clinic and user
             JsonObject appointment = JsonParser.parseString(payload).getAsJsonObject();
+            Document user = userDao.readItem(appointment.get("_userId").getAsString());
+            Document clinic = clinicDao.readItem(appointment.get("_clinicId").getAsString());
+
+            // Formats the email content
+            EmailContent contactInfo = new EmailContent(user, clinic, appointment);
 
             String subject = "Dentist Cancellation Appointment";
-
-            Document user = USER_DAO.readItem(appointment.get("_userId").getAsString());
-            Document clinic = CLINIC_DAO.readItem(appointment.get("_clinicId").getAsString());
-
-            String name = user.getString("name");
-            String clinicName = clinic.getString("name");
-            JsonElement dateElement = appointment.get("date");
-            JsonObject dateObject = dateElement.getAsJsonObject();
-            String date = dateObject.get("$date").getAsString();
-            String timeFrom = appointment.get("timeFrom").getAsString();
-            String timeTo = appointment.get("timeTo").getAsString();
-            String time = timeFrom + " - " + timeTo;
-            String location = clinic.getString("address");
-
-            String body = EMAIL_FORMATTER.cancellationDentist(name, clinicName, date, time, location);
-
+            String body = emailFormatter.dentistCancellation(contactInfo);
             String from = ConfigHandler.getVariable("GMAIL_USER");
-            String to = user.getString("email");
 
-            EMAIL_SENDER.sendMessage(to, from, subject, body);
+            // Sends the email
+            emailSender.sendMessage(contactInfo.getUserEmail(), from, subject, body);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -84,29 +66,20 @@ public class NotificationHandler {
     /** Handles cancellation made by user **/
     public void userCancellation(String payload){
         try {
+            // Parses appointment from payload and finds associated clinic and user
             JsonObject appointment = JsonParser.parseString(payload).getAsJsonObject();
+            Document user = userDao.readItem(appointment.get("_userId").getAsString());
+            Document clinic = clinicDao.readItem(appointment.get("_clinicId").getAsString());
+
+            // Formats the email content
+            EmailContent contactInfo = new EmailContent(user, clinic, appointment);
 
             String subject = "Cancellation Dental Appointment";
-
-            Document user = USER_DAO.readItem(appointment.get("_userId").getAsString());
-            Document clinic = CLINIC_DAO.readItem(appointment.get("_clinicId").getAsString());
-
-            String name = user.getString("name");
-            String clinicName = clinic.getString("name");
-            JsonElement dateElement = appointment.get("date");
-            JsonObject dateObject = dateElement.getAsJsonObject();
-            String date = dateObject.get("$date").getAsString();
-            String timeFrom = appointment.get("timeFrom").getAsString();
-            String timeTo = appointment.get("timeTo").getAsString();
-            String time = timeFrom + " - " + timeTo;
-            String location = clinic.getString("address");
-
-            String body = EMAIL_FORMATTER.cancellationUser(name, clinicName, date, time, location);
-
+            String body = emailFormatter.userCancellation(contactInfo);
             String from = ConfigHandler.getVariable("GMAIL_USER");
-            String to = user.getString("email");
 
-            EMAIL_SENDER.sendMessage(to, from, subject, body);
+            // Sends the email
+            emailSender.sendMessage(contactInfo.getUserEmail(), from, subject, body);
 
         } catch (Exception e) {
             e.printStackTrace();
