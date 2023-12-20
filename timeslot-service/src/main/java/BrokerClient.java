@@ -56,7 +56,6 @@ public class BrokerClient {
             MqttMessage message = new MqttMessage(content.getBytes());
             message.setQos(qos);
             this.client.publish(topic, message);
-            System.out.println("Message published");
         } catch(MqttException me) {
             handleMqttException(me);
         }
@@ -113,6 +112,7 @@ public class BrokerClient {
         subscribe(Topic.ALL.getStringValue(), 1);
         subscribe(Topic.SHUTDOWN.getStringValue(), 0);
         subscribe(Topic.RESTART.getStringValue(), 0);
+        subscribe(Topic.PING.getStringValue(), 0);
     }
 
     // Callback method

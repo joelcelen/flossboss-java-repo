@@ -4,8 +4,8 @@ import java.util.concurrent.Executors;
 public class AppointmentService {
     public static void main(String[] args) throws InterruptedException {
 
-        // Create new thread pool with 8 threads
-        ExecutorService threadPool = Executors.newFixedThreadPool(8);
+        // Create new thread pool with 6 threads
+        ExecutorService threadPool = Executors.newFixedThreadPool(6);
 
         // Create the delay queue and assign one thread to it
         PendingQueue pendingQueue = PendingQueue.getInstance();

@@ -7,10 +7,12 @@ public class TimeslotCallback implements MqttCallback {
 
     private final TimeslotCreator timeslotCreator;
     private final BrokerClient brokerClient;
+    private final HealthHandler healthHandler;
 
     public TimeslotCallback(BrokerClient brokerClient){
         this.timeslotCreator = new TimeslotCreator();
         this.brokerClient = brokerClient;
+        this.healthHandler = new HealthHandler();
     }
 
     @Override
@@ -54,14 +56,19 @@ public class TimeslotCallback implements MqttCallback {
         } else if (topic.equals(Topic.SHUTDOWN.getStringValue())) {
             ShutdownManager.shutdownRequested = true;
 
+        } else if (topic.equals(Topic.PING.getStringValue())) {
+            // Create separate thread to handle pings
+            Thread healthThread = new Thread(healthHandler::echo);
+            // Set the thread as a daemon so that it won't prevent the application from exiting
+            healthThread.setDaemon(true);
+
+            healthThread.start();
         }
     }
 
     @Override
     public void deliveryComplete(IMqttDeliveryToken token) {
-        if (token.isComplete()) {
-            System.out.println("Message delivered successfully.");
-        } else {
+        if (!token.isComplete()) {
             System.out.println("Message delivery failed.");
             if (token.getException() != null) {
                 token.getException().printStackTrace();
