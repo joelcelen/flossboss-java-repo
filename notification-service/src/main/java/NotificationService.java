@@ -1,3 +1,4 @@
+import org.bson.Document;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -10,42 +11,27 @@ public class NotificationService {
         brokerClient.connect();
 
         // Create Database Client with placeholder URI, testing db so no need to mask
-        DatabaseClient databaseClient = DatabaseClient.getInstance(ConfigHandler.getVariable("ATLAS_TEST_URI"));
+        DatabaseClient databaseClient = DatabaseClient.getInstance(ConfigHandler.getVariable("ATLAS_URI"));
 
         // Connect to the specific DB within the cluster
-        databaseClient.connect("services-db");
+        databaseClient.connect("flossboss");
 
         // Set the collection on which you want to operate on
-        databaseClient.setCollection("services");
+        databaseClient.setCollection("users");
 
-        // Get specific test item, placeholder
-        String service = databaseClient.getID("NotificationService");
-        System.out.println(databaseClient.readItem(service));
+        Document user = databaseClient.readItem("6582eff20370d16482ca06b5");
+        String userEmail = user.getString("email");
 
-        // Publish payload to topic, placeholder
-        brokerClient.publish("flossboss/test/publish", "I'm the NotificationService", 0);
+        String flossbossEmail = ConfigHandler.getVariable("GMAIL_USER");
 
-        // Subscribe to topic, placeholder
-        brokerClient.subscribe("flossboss/test/subscribe",0);
+        EmailSender emailSender = new EmailSender();
 
-        // Placeholder callback functionality, replace with real logic once decided
-        brokerClient.setCallback(
-                new MqttCallback() {
-                    @Override
-                    public void connectionLost(Throwable throwable) {
-                        System.out.println("Connection Lost");
-                    }
+        boolean sent = emailSender.sendMessage(userEmail, flossbossEmail, "Test mail", "Random Body");
 
-                    @Override
-                    public void messageArrived(String topic, MqttMessage mqttMessage) {
-                        System.out.println(mqttMessage);
-                    }
-
-                    @Override
-                    public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
-                        System.out.println("Delivery Complete");
-                    }
-                }
-        );
+        if(sent){
+            System.out.println("Mail successfully sent!");
+        } else {
+            System.out.println("Error sending mail.");
+        }
     }
 }

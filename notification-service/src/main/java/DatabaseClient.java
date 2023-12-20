@@ -9,6 +9,8 @@ import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import javax.print.Doc;
+
 public class DatabaseClient {
 
     public static DatabaseClient instance;
@@ -77,14 +79,13 @@ public class DatabaseClient {
     }
 
     /** Reads an item based on the item's ID and returns it as JSON **/
-    public String readItem(String id) {
+    public Document readItem(String id) {
 
-        String query;
+        Document query;
         if (existsItem(id)) {
-            Document item = collection.find(eq("_id", new ObjectId(id))).first();
-            query = item.toJson();
+            query = collection.find(eq("_id", new ObjectId(id))).first();
         } else {
-            query = "No item with specified ID found";
+            query = null;
         }
 
         return query;
