@@ -10,15 +10,6 @@ public class NotificationService {
         BrokerClient brokerClient = BrokerClient.getInstance();
         brokerClient.connect();
 
-        // Create Database Client with placeholder URI, testing db so no need to mask
-        DatabaseClient databaseClient = DatabaseClient.getInstance(ConfigHandler.getVariable("ATLAS_URI"));
-
-        // Connect to the specific DB within the cluster
-        databaseClient.connect("flossboss");
-
-        // Set the collection on which you want to operate on
-        databaseClient.setCollection("users");
-
         brokerClient.setCallback(new NotificationCallback(threadPool));
 
         /**

@@ -5,12 +5,14 @@ import org.bson.Document;
 
 public class NotificationHandler {
 
-    private final DatabaseClient DATABASE_CLIENT;
+    private final UserDao USER_DAO;
+    private final ClinicDao CLINIC_DAO;
     private final EmailFormatter EMAIL_FORMATTER;
     private final EmailSender EMAIL_SENDER;
 
     public NotificationHandler(){
-        this.DATABASE_CLIENT = DatabaseClient.getInstance();
+        this.CLINIC_DAO = ClinicDao.getInstance();
+        this.USER_DAO = UserDao.getInstance();
         this.EMAIL_FORMATTER = new EmailFormatter();
         this.EMAIL_SENDER = new EmailSender();
     }
@@ -22,11 +24,8 @@ public class NotificationHandler {
 
             String subject = "Confirmation Dental Appointment";
 
-            DATABASE_CLIENT.setCollection("users");
-            Document user = DATABASE_CLIENT.readItem(appointment.get("_userId").getAsString());
-            DATABASE_CLIENT.setCollection("clinics");
-            Document clinic = DATABASE_CLIENT.readItem(appointment.get("_clinicId").getAsString());
-            DATABASE_CLIENT.setCollection("users");
+            Document user = USER_DAO.readItem(appointment.get("_userId").getAsString());
+            Document clinic = CLINIC_DAO.readItem(appointment.get("_clinicId").getAsString());
 
             String name = user.getString("name");
             String clinicName = clinic.getString("name");
@@ -57,11 +56,8 @@ public class NotificationHandler {
 
             String subject = "Dentist Cancellation Appointment";
 
-            DATABASE_CLIENT.setCollection("users");
-            Document user = DATABASE_CLIENT.readItem(appointment.get("_userId").getAsString());
-            DATABASE_CLIENT.setCollection("clinics");
-            Document clinic = DATABASE_CLIENT.readItem(appointment.get("_clinicId").getAsString());
-            DATABASE_CLIENT.setCollection("users");
+            Document user = USER_DAO.readItem(appointment.get("_userId").getAsString());
+            Document clinic = CLINIC_DAO.readItem(appointment.get("_clinicId").getAsString());
 
             String name = user.getString("name");
             String clinicName = clinic.getString("name");
@@ -92,11 +88,8 @@ public class NotificationHandler {
 
             String subject = "Cancellation Dental Appointment";
 
-            DATABASE_CLIENT.setCollection("users");
-            Document user = DATABASE_CLIENT.readItem(appointment.get("_userId").getAsString());
-            DATABASE_CLIENT.setCollection("clinics");
-            Document clinic = DATABASE_CLIENT.readItem(appointment.get("_clinicId").getAsString());
-            DATABASE_CLIENT.setCollection("users");
+            Document user = USER_DAO.readItem(appointment.get("_userId").getAsString());
+            Document clinic = CLINIC_DAO.readItem(appointment.get("_clinicId").getAsString());
 
             String name = user.getString("name");
             String clinicName = clinic.getString("name");

@@ -7,12 +7,12 @@ import java.util.concurrent.ExecutorService;
 
 public class NotificationCallback implements MqttCallback {
 
-    //private final ExecutorService THREAD_POOL;
+    private final ExecutorService THREAD_POOL;
     private final BrokerClient BROKER_CLIENT;
     private final NotificationHandler NOTIFICATION_HANDLER;
 
     public NotificationCallback(ExecutorService threadPool){
-        //this.THREAD_POOL = threadPool;
+        this.THREAD_POOL = threadPool;
         this.BROKER_CLIENT = BrokerClient.getInstance();
         this.NOTIFICATION_HANDLER = new NotificationHandler();
     }
@@ -27,15 +27,15 @@ public class NotificationCallback implements MqttCallback {
 
         if (topic.startsWith(Topic.CONFIRM.getStringValue())) {
             if (isValidPayload(payload)){
-                NOTIFICATION_HANDLER.confirmation(payload);
+                this.THREAD_POOL.submit(()->NOTIFICATION_HANDLER.confirmation(payload));
             }
         } else if (topic.startsWith(Topic.CANCEL_DENTIST.getStringValue())) {
             if (isValidPayload(payload)){
-                NOTIFICATION_HANDLER.dentistCancellation(payload);
+                this.THREAD_POOL.submit(()->NOTIFICATION_HANDLER.dentistCancellation(payload));
             }
         } else if (topic.startsWith(Topic.CANCEL_USER.getStringValue())) {
             if (isValidPayload(payload)){
-                NOTIFICATION_HANDLER.userCancellation(payload);
+                this.THREAD_POOL.submit(()->NOTIFICATION_HANDLER.userCancellation(payload));
             }
         }
     }

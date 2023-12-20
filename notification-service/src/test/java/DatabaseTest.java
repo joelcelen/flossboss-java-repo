@@ -7,15 +7,13 @@ import static org.junit.Assert.*;
 
 public class DatabaseTest {
 
-    private DatabaseClient dbClient;
+    private TestingDao dbClient;
     private String itemID;
 
     /** Creates a client and a test-item before each test **/
     @Before
     public void before(){
-        this.dbClient = DatabaseClient.getInstance(ConfigHandler.getVariable("ATLAS_TEST_URI"));
-        this.dbClient.connect("services-db");
-        this.dbClient.setCollection("services");
+        this.dbClient = TestingDao.getInstance();
         Document item = new Document()
                 .append("service_name", "NotificationService_Test")
                 .append("version", 1)
