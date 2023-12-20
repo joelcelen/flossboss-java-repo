@@ -17,3 +17,6 @@ buildNumber.properties
 
 # MacOS
 **/.DS_Store
+
+# environmental files
+.env
