@@ -1,5 +1,3 @@
-package org.flossboss.notificationservice;
-
 import org.eclipse.paho.client.mqttv3.*;
 
 import java.io.BufferedReader;
@@ -36,8 +34,6 @@ public class BrokerClient {
         }
     }
 
-
-
     // Publish method
     public void publish(String topic, String content, int qos){
         try {
@@ -54,24 +50,11 @@ public class BrokerClient {
     public void subscribe(String topic, int qos){
         try {
             this.client.subscribe(topic, qos);
-            System.out.println("Subscribing to topic: " + topic);
+            System.out.println("Subscribed to topic: " + topic);
         }catch (MqttException me){
             handleMqttException(me);
         }
     }
-
-
-    public void subscribe(String[] topics, int[] qosLevels) {
-        try {
-            this.client.subscribe(topics, qosLevels);
-            for (int i = 0; i < topics.length; i++) {
-                System.out.println("Subscribing to topic: " + topics[i] + " with QoS " + qosLevels[i]);
-            }
-        } catch (MqttException me) {
-            handleMqttException(me);
-        }
-    }
-
 
     // Disconnect method
     public void disconnect(){
@@ -89,7 +72,7 @@ public class BrokerClient {
     }
 
     // Helper method to print exception details
-    public void handleMqttException(MqttException me) {
+    private void handleMqttException(MqttException me) {
         System.out.println("reason " + me.getReasonCode());
         System.out.println("msg " + me.getMessage());
         System.out.println("loc " + me.getLocalizedMessage());
