@@ -13,7 +13,7 @@ public class DatabaseTest {
     /** Creates a client and a test-item before each test **/
     @Before
     public void before(){
-        this.dbClient = new DatabaseClient(ConfigHandler.getVariable("ATLAS_TEST_URI"));
+        this.dbClient = DatabaseClient.getInstance(ConfigHandler.getVariable("ATLAS_TEST_URI"));
         this.dbClient.connect("services-db");
         this.dbClient.setCollection("services");
         Document item = new Document()

@@ -9,15 +9,9 @@ import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.stream.Collectors;
-
 public class DatabaseClient {
 
+    public static DatabaseClient instance;
     private String uri;
     private MongoClient mongoClient;
     private MongoDatabase database;
@@ -26,16 +20,31 @@ public class DatabaseClient {
     /**
      * Constructor that uses URI specified in environmental file
      **/
-    public DatabaseClient() {
+    private DatabaseClient() {
         this.uri = ConfigHandler.getVariable("ATLAS_URI");
     }
 
     /**
      * Constructor that takes specific URI as an argument and connects to it
      **/
-    public DatabaseClient(String uri) {
+    private DatabaseClient(String uri) {
         this.uri = uri;
     }
+
+    public static DatabaseClient getInstance(){
+        if(instance == null){
+            instance = new DatabaseClient();
+        }
+        return instance;
+    }
+
+    public static DatabaseClient getInstance(String uri){
+        if(instance == null){
+            instance = new DatabaseClient(uri);
+        }
+        return instance;
+    }
+
 
     /** Creates the MongoClient and takes a specific DB within your cluster **/
     public void connect(String db) {
@@ -43,9 +52,12 @@ public class DatabaseClient {
         this.database = mongoClient.getDatabase(db);
     }
 
-    /** Disconnect method **/
-    public void disconnect() {
-        this.mongoClient.close();
+    /** Disconnect method  **/
+    public void disconnect(){
+        if(instance != null) {
+            this.mongoClient.close();
+            instance = null;
+        }
     }
 
     /** Set the collection that you currently want to operate on **/

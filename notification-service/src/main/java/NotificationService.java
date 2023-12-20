@@ -6,11 +6,11 @@ public class NotificationService {
     public static void main(String[] args){
 
         // Instantiate MQTT Broker instance
-        BrokerClient brokerClient = new BrokerClient();
+        BrokerClient brokerClient = BrokerClient.getInstance();
         brokerClient.connect();
 
         // Create Database Client with placeholder URI, testing db so no need to mask
-        DatabaseClient databaseClient = new DatabaseClient(ConfigHandler.getVariable("ATLAS_TEST_URI"));
+        DatabaseClient databaseClient = DatabaseClient.getInstance(ConfigHandler.getVariable("ATLAS_TEST_URI"));
 
         // Connect to the specific DB within the cluster
         databaseClient.connect("services-db");
