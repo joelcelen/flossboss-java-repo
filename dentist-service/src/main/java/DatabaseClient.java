@@ -154,7 +154,6 @@ public class DatabaseClient {
         return id;
     }
 
-
     /** Helper method to load in the environmentals from the .txt file **/
     private void loadURI() {
         String path = "atlasconfig.txt";

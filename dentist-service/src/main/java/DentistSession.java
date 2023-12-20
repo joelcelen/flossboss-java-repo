@@ -4,7 +4,8 @@ import org.bson.Document;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/** This class will hold the state and operations for a single dentists session
+/**
+ *  This class will hold the state and operations for a single dentists session
  *  Needed to handle multiple dentist accounts concurrently
  */
 
@@ -50,7 +51,6 @@ public class DentistSession {
                 }
             }
         }
-
         // Publish confirmation
         publishRegistrationConfirmation(brokerClient, validEmail, clinicExists);
     }
@@ -64,7 +64,6 @@ public class DentistSession {
                 .append("fullName",fullName)
                 .append("password",password)
                 .append("_clinicId", clinicId);
-
         // Make sure email is unique before dentist is created
         try {
             databaseClient.createItem(dentistDocument);
@@ -146,7 +145,15 @@ public class DentistSession {
     }
 
     /** Set collection to appointments and retrieve all appointment items from DB for e specific dentist, return JSONArray of appointments */
-    private JSONArray getAppointments(DatabaseClient databaseClient) {
+    private JSONArray getAppointments(DatabaseClient databaseClient, BrokerClient brokerClient) {
+        //TODO
+        // Ensure past appointments are not retrieved
+        // publish to "timeslots/cleanup"
+        /*
+        // Delete past appointments to ensure they are not retrieved
+        final String DELETE_PAST_APPOINTMENTS = "timeslots/cleanup";
+        brokerClient.publish(DELETE_PAST_APPOINTMENTS, "OK", 1);
+         */
         databaseClient.setCollection(APPOINTMENT_COLLECTION);
         System.out.println("Dentist ID: "+ dentistId);
         return databaseClient.getAppointmentsForDentist(dentistId);
@@ -155,10 +162,8 @@ public class DentistSession {
     /** Convert appointments to string and publish, send all appointments in one message (array) to increase performance*/
     public void publishAppointments(BrokerClient brokerClient, DatabaseClient databaseClient) {
         final String SEND_APPOINTMENTS_TOPIC = "flossboss/dentist/send/appointments/"+email;
-        JSONArray appointments = getAppointments(databaseClient);
+        JSONArray appointments = getAppointments(databaseClient, brokerClient);
         String payload = appointments.toString();
-        System.out.println("Publishing appointments to: " + SEND_APPOINTMENTS_TOPIC);
-        System.out.println(payload);
         brokerClient.publish(SEND_APPOINTMENTS_TOPIC, payload, 1);
     }
 

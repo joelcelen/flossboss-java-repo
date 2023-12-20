@@ -21,7 +21,6 @@ public class DentistUI {
 
         scanner = new Scanner(System.in);   // Create a scanner to read user input
         char option;    // Variable for the menu options
-
         // Instantiate mqtt client
         ClientMqtt clientMqtt = ClientMqtt.configMqttClient();
         if (clientMqtt == null) {
@@ -112,19 +111,11 @@ public class DentistUI {
                     } catch (MqttException e) {
                         throw new RuntimeException(e);
                     }
-
                 }
             }
         }
         scanner.close();
-    }   // MAIN METHOD ENDS HERE
-
-
-    /************************************************************
-     * PLACE ALL METHODS BELOW THIS LINE!!!
-     * DO NOT place method implementation directly in the main!
-     * Only call methods in main
-     ***********************************************************/
+    }
 
     /** Prompt user to login and publish given data to MQTT */
     private static void loginDentist(ClientMqtt clientMqtt) throws MqttException {
@@ -135,8 +126,7 @@ public class DentistUI {
         email = scanner.nextLine();
         System.out.print("Enter password: ");
         String password = scanner.nextLine();
-
-        // Initialize MQTT callback after email is set so that the subscribed topic includes email ("flossboss/dentist/register/confirmation/"+email)
+        // Initialize MQTT callback after email is set so that the subscribed topic includes email ("flossboss/dentist/login/confirmation/"+email)
         mqttCallback(clientMqtt);
         // Call method to store dentist information in JSON object, convert JSON object to String and publish to MQTT Broker
         publishLoginData(clientMqtt, email, password);
@@ -182,12 +172,12 @@ public class DentistUI {
         }
         System.out.print("Enter clinic-ID: ");
         String clinicId = scanner.nextLine();
-
         // Initialize MQTT callback after email is set so that the subscribed topic includes email ("flossboss/dentist/register/confirmation/"+email)
         mqttCallback(clientMqtt);
         // Call method to store dentist information in JSON object, convert JSON object to String and publish to MQTT Broker
         publishRegisterData(clientMqtt, name, email, password, clinicId);
     }
+
     /** Store dentist information in JSON object, convert JSON object to String and publish to MQTT Broker */
     private static void publishRegisterData(ClientMqtt clientMqtt, String name, String email, String password, String clinicId) throws MqttException {
         final String REGISTER_REQUEST_TOPIC = "flossboss/dentist/register/request";
@@ -226,14 +216,12 @@ public class DentistUI {
     private static void displayAppointments() {
         // Sort appointments according to date and time
         appointments.sort(Comparator.comparing(Appointment::getDate).thenComparing(Appointment::getTimeFrom));
-
         // Print calender headers
         System.out.println("\n\n\n\n\n----------------------------------------------------------");
         System.out.println("  Day         Date         Time         Available   Booked");
         System.out.println("----------------------------------------------------------");
-
-        LocalDate currentDate = null;   // Initialize currentDate as null
-
+        // Initialize currentDate as null
+        LocalDate currentDate = null;
         // Loop through appointments
         for (Appointment appointment : appointments) {
             // Parse appointment date into local date
@@ -257,31 +245,27 @@ public class DentistUI {
         // Request appointments from broker and pause thread while waiting for the data to arrive via MQTT
         requestAppointments(clientMqtt);
         try {Thread.sleep(1000);} catch (InterruptedException e) { Thread.currentThread().interrupt(); }
-
-        // Create a list to store appointments where isAvailable is true
+        // Create a list to store appointments where isAvailable is true and loop through appointments and add to list if isAvailable is true
         List<Appointment> availableAppointments = new ArrayList<>();
-
         for (Appointment appointment : appointments) {
             if (appointment.isAvailable()) {
                 availableAppointments.add(appointment);
             }
         }
-        // Loop through appointments and add to list if isAvailable is true
         if (availableAppointments.isEmpty()) {
             System.out.println("You have not made yourself available to any appointments, press option '2: Manage Appointments'.");
         } else {
             // Sort the available appointments according to date and time
             availableAppointments.sort(Comparator.comparing(Appointment::getDate).thenComparing(Appointment::getTimeFrom));
-
             // Print calender headers
             System.out.println("\n\n\n\n\n----------------------------------------------");
             System.out.println("           My Available Appointments          ");
             System.out.println("----------------------------------------------");
             System.out.println("  Day         Date         Time         Booked");
             System.out.println("----------------------------------------------");
-
-            LocalDate currentDate = null;   // Initialize currentDate as null
-
+            // Initialize currentDate as null
+            LocalDate currentDate = null;
+            // Loop through available appointments
             for (Appointment appointment : availableAppointments) {
                 // Parse appointment date into local date
                 LocalDate appointmentDate = appointment.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
@@ -306,7 +290,6 @@ public class DentistUI {
         try {Thread.sleep(1000);} catch (InterruptedException e) { Thread.currentThread().interrupt(); }
         // Display appointments so that dentist can see all time slots
         displayAppointments();
-
         // Ensure valid action.
         boolean validAction = false;
         String addOrDelete = null;
@@ -318,7 +301,6 @@ public class DentistUI {
                 System.out.println("Invalid action. Please try again.");
             }
         }
-
         // Ensure valid time slot format using regex
         boolean validTimeSlots = false;
         String[] timeSlots = new String[0];
@@ -332,7 +314,6 @@ public class DentistUI {
                 System.out.println("Invalid time slot format. Please try again");
             }
         }
-
         // Ensure valid date format using regex
         boolean validDate = false;
         LocalDate startDate = null;
@@ -341,7 +322,6 @@ public class DentistUI {
         while (!validDate) {
             System.out.println("Enter date range (YYYY-MM-DD, YYYY-MM-DD)");
             String dateRangeInput = scanner.nextLine();
-
             // Check for single or multiple dates
             if (dateRangeInput.contains(",")) {
                 // Parse the date range
@@ -378,7 +358,6 @@ public class DentistUI {
             String[] timeSlotParts = timeSlot.split("-");
             String timeFrom = timeSlotParts[0];
             String timeTo = timeSlotParts[1];
-
             changeAvailable(date, timeFrom, timeTo, addOrDelete, clientMqtt);
         }
     }
@@ -386,7 +365,6 @@ public class DentistUI {
     /** Helper method used in timeSlotLoop() that update the isAvailable boolean */
     private static void changeAvailable(LocalDate date, String timeFrom, String timeTo, String addOrDelete, ClientMqtt clientMqtt) throws MqttException{
         boolean isAvailable = (addOrDelete.equals("+"));
-
         // Loop through the appointments to find the one matching the input from the parameters
         for (Appointment appointment : appointments) {
             if (appointment.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().isEqual(date) &&
@@ -394,13 +372,8 @@ public class DentistUI {
                 appointment.getTimeTo().equals(timeTo)) {
                 // Update isAvailable based on the char from parameter
                 appointment.setAvailable(isAvailable);
-
-                // Debugging remove later
-                System.out.println(appointment.getDate() + " "+ appointment.getTimeFrom() + " - " + appointment.getTimeTo() + " "+ appointment.isAvailable());
-
                 //Publish change in availability
                 publishAvailability(appointment, isAvailable,clientMqtt);
-
                 return; // Exit the loop once appointment is found and updated
             }
         }
@@ -411,15 +384,13 @@ public class DentistUI {
     private static void publishAvailability(Appointment appointment, boolean isAvailable, ClientMqtt clientMqtt) throws MqttException{
         final String AVAILABLE = "flossboss/appointment/request/available";
         final String NOT_AVAILABLE = "flossboss/appointment/request/canceldentist";
-
+        // Store appointment from parameter in json object and convert to string
         JSONObject jsonAppointment = new JSONObject();
         jsonAppointment.put("_id", appointment.getAppointmentId());
         jsonAppointment.put("_userId", appointment.getDentistId());
         jsonAppointment.put("_clinicId", appointment.getClinicId());
         String payload = jsonAppointment.toString();
-
-        System.out.println(payload);    // Debugging
-
+        // Publish to topic depending on boolean value
         if (isAvailable) {
             clientMqtt.publish(AVAILABLE, payload, 1);
         } else {
@@ -433,14 +404,14 @@ public class DentistUI {
         for (Appointment appointment : appointments) {
             if (appointment.getDentistId().equals(dentistId) && appointment.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().isEqual(date) &&
                     appointment.getTimeFrom().equals(timeFrom) &&
-                    appointment.getTimeTo().equals(timeTo)) {
-
+                    appointment.getTimeTo().equals(timeTo))
+            {
                 appointment.setBooked(isBooked);
                 LocalDate appointmentDate = appointment.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                 String timeSlot = appointment.getTimeFrom() + "-" + appointment.getTimeTo();
                 String bookedStatus = appointment.isBooked() ? "Yes" : "No";
                 String notification = appointment.isBooked() ? "booked" : "canceled";
-
+                // Print update
                 System.out.printf("Update! The following appointment has been %s!\n", notification);
                 System.out.println("----------------------------------------------");
                 System.out.println("  Day         Date         Time         Booked");
@@ -463,7 +434,6 @@ public class DentistUI {
         SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         Date date = isoFormat.parse(dateString);
         LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
         // Update appointment with payload
         appointmentUpdate(dentistId, localDate, timeFrom, timeTo, isBooked);
     }
@@ -473,7 +443,6 @@ public class DentistUI {
         final String VALID_EMAIL = "validEmail";
         final String CLINIC_EXISTS = "clinicExists";
         JSONObject confirmation = new JSONObject(new String(message.getPayload()));
-
         if (confirmation.getBoolean(VALID_EMAIL) && confirmation.getBoolean(CLINIC_EXISTS)) {
             authenticated = true;
             System.out.println("\n\nRegistration Successful");
@@ -489,7 +458,7 @@ public class DentistUI {
         JSONObject confirmation = new JSONObject(new String(message.getPayload()));
         if (confirmation.getBoolean("confirmed")) {
             authenticated = true;
-            name = confirmation.getString("dentistName");       // Extract name from payload so that it is displayed in UI
+            name = confirmation.getString("dentistName");   // Extract name from payload so that it is displayed in UI
             System.out.println("\n\nLogin Successful");
         } else {
             System.out.println("\n\nLogin Failed");

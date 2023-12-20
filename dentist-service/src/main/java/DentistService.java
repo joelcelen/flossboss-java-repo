@@ -33,12 +33,6 @@ public class DentistService {
         dentistService.mqttCallback(brokerClient, databaseClient);
     }
 
-    /************************************************************
-     * PLACE ALL METHODS BELOW THIS LINE!!!
-     * DO NOT place method implementation directly in the main!
-     * Only call methods in main
-     ***********************************************************/
-
     /** Handle incoming MQTT messages */
     private void mqttCallback (BrokerClient brokerClient, DatabaseClient databaseClient) {
         // Specify topics
