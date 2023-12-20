@@ -155,7 +155,6 @@ public class DentistSession {
         brokerClient.publish(DELETE_PAST_APPOINTMENTS, "OK", 1);
          */
         databaseClient.setCollection(APPOINTMENT_COLLECTION);
-        System.out.println("Dentist ID: "+ dentistId);
         return databaseClient.getAppointmentsForDentist(dentistId);
     }
 
