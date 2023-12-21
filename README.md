@@ -1,4 +1,4 @@
-# FlossBoss Java repo
+# FlossBoss Java Repository
 
 ## Description
 
