@@ -7,7 +7,7 @@ This repository contains the Java codebase for the entire system, including the 
 
 ## Table of contents
 1. [System Overview](#system-overview)
-2. [Technologies Used](#technologies-used)
+2. [Technologies and Tools Used](#technologies-and-tools-used-in-this-repository)
 3. [Installation guide](#installation-guide)
 4. [Authors and Acknowledgments](#authors-and-acknowledgments)
 5. [License](#license)
@@ -19,7 +19,7 @@ The diagram below provides a visual representation of the development view for t
 ### Development view
 <img src="https://i.imgur.com/RaZndv5.png" />
 
-## Technologies used
+## Technologies and Tools used in this repository
 **Programmning Languages:** Java 17
 
 **Build Tools and Dependency Management:** Maven
