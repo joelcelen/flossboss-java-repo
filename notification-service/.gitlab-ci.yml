@@ -13,6 +13,10 @@ variables:
   GMAIL_USER: "$GMAIL_USER"
   GMAIL_PW: "$GMAIL_PW"
 
+before_script:
+  - cd notification-service
+  - touch .env
+
 image: maven:latest
 
 stages:
