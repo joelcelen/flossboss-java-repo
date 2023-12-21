@@ -14,8 +14,9 @@ variables:
   GMAIL_PW: "$GMAIL_PW"
 
 before_script:
-  - cd notification-service
-  - touch .env
+  - "cd notification-service && touch .env && cd .."
+  - ls -la  # Print directory contents for debugging
+
 
 image: maven:latest
 
