@@ -11,11 +11,13 @@ public class NotificationCallback implements MqttCallback {
     private final ExecutorService threadPool;
     private final BrokerClient brokerClient;
     private final NotificationHandler handler;
+    private final HealthHandler healthHandler;
 
     public NotificationCallback(ExecutorService threadPool){
         this.threadPool = threadPool;
         this.brokerClient = BrokerClient.getInstance();
         this.handler = new NotificationHandler();
+        this.healthHandler = new HealthHandler();
     }
     @Override
     public void connectionLost(Throwable cause) {
@@ -38,6 +40,13 @@ public class NotificationCallback implements MqttCallback {
             if (isValidPayload(payload)){
                 this.threadPool.submit(()-> handler.userCancellation(payload));
             }
+        } else if (topic.equals(Topic.PING.getStringValue())) {
+            // Create separate thread to handle pings
+            Thread healthThread = new Thread(healthHandler::echo);
+            // Set the thread as a daemon so that it won't prevent the application from exiting
+            healthThread.setDaemon(true);
+
+            healthThread.start();
         }
     }
 

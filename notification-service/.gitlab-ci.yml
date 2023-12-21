@@ -4,6 +4,14 @@ workflow:
 
 variables:
   MAVEN_OPTS: -Dmaven.repo.local=.m2/repository
+  ATLAS_TEST_URI: "$ATLAS_TEST_URI"
+  ATLAS_URI: "$ATLAS_URI"
+  HIVE_CLIENT_NAME: "$HIVE_CLIENT_NAME"
+  HIVE_URL: "$HIVE_URL"
+  HIVE_USER: "$HIVE_USER"
+  HIVE_PW: "$HIVE_PW"
+  GMAIL_USER: "$GMAIL_USER"
+  GMAIL_PW: "$GMAIL_PW"
 
 image: maven:latest
 
