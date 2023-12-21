@@ -62,3 +62,4 @@ The diagram below provides a visual representation of the development view for t
 
 
 ## License
+The FlossBoss project is licensed under [MIT](https://git.chalmers.se/courses/dit355/2023/student-teams/dit356-2023-16/flossboss-java-repo/-/blob/main/LICENSE)
