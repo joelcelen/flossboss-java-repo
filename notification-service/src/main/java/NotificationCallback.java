@@ -1,5 +1,6 @@
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -51,25 +52,30 @@ public class NotificationCallback implements MqttCallback {
     }
 
     /** Checks if payload is in the correct format. **/
-    private boolean isValidPayload(String payload){
-        JsonObject jsonPayload = JsonParser.parseString(payload).getAsJsonObject();
+    protected boolean isValidPayload(String payload){
+        try {
+            JsonObject jsonPayload = JsonParser.parseString(payload).getAsJsonObject();
 
-        // Check that every attribute of the appointment is present.
-        if (jsonPayload.has("_id")
-                && jsonPayload.has("_clinicId")
-                && jsonPayload.has("_dentistId")
-                && jsonPayload.has("_userId")
-                && jsonPayload.has("date")
-                && jsonPayload.has("timeFrom")
-                && jsonPayload.has("timeTo")
-                && jsonPayload.has("isAvailable")
-                && jsonPayload.has("isPending")
-                && jsonPayload.has("isBooked")){
-            System.out.println("Valid Payload");
-            return true;
+            // Check that every attribute of the appointment is present.
+            if (jsonPayload.has("_id")
+                    && jsonPayload.has("_clinicId")
+                    && jsonPayload.has("_dentistId")
+                    && jsonPayload.has("_userId")
+                    && jsonPayload.has("date")
+                    && jsonPayload.has("timeFrom")
+                    && jsonPayload.has("timeTo")
+                    && jsonPayload.has("isAvailable")
+                    && jsonPayload.has("isPending")
+                    && jsonPayload.has("isBooked")) {
+                return true;
+            } else {
+                System.out.println("Invalid Payload");
+                return false;
+            }
+        } catch (JsonSyntaxException e) {
+            System.out.println("Invalid JSON Syntax");
+            return false;
         }
-        System.out.println("Invalid Payload");
-        return false;
     }
 
     /** Reconnection logic **/

@@ -1,16 +1,23 @@
-import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.mail.*;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
-
 import java.util.Properties;
 
 public class EmailSender {
 
-    public boolean sendMessage(String to, String from, String subject, String body) {
+    private final Session session;
 
-        boolean flag = false;
+    // Default constructor using the actual configuration
+    public EmailSender() {
+        this.session = createSession();
+    }
 
+    // Constructor that accepts a Session object (for testing purposes)
+    public EmailSender(Session session) {
+        this.session = session;
+    }
+
+    private Session createSession() {
         // Setup properties for the mail session
         Properties props = new Properties();
         props.put("mail.smtp.host", "smtp.gmail.com");
@@ -21,12 +28,18 @@ public class EmailSender {
         String user = ConfigHandler.getVariable("GMAIL_USER");
         String password = ConfigHandler.getVariable("GMAIL_PW");
 
-        Session session = Session.getDefaultInstance(props, new Authenticator() {
+        // Explicitly create the mail session
+        return Session.getInstance(props, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(user, password);
             }
         });
+    }
+
+
+    public boolean sendMessage(String to, String from, String subject, String body) {
+        boolean flag = false;
 
         try {
             Message message = new MimeMessage(session);
