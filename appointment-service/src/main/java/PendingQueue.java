@@ -64,6 +64,13 @@ public class PendingQueue implements Runnable{
         delayQueue.clear();
     }
 
+    public void disconnect(){
+        resetState();
+        if(instance != null){
+            instance = null;
+        }
+    }
+
     public void setDatabaseClient(DatabaseClient databaseClient){
         this.databaseClient = databaseClient;
     }

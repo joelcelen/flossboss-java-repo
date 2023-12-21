@@ -1,13 +1,11 @@
-import org.bson.Document;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class AppointmentService {
     public static void main(String[] args) throws InterruptedException {
 
-        // Create new thread pool with 8 threads
-        ExecutorService threadPool = Executors.newFixedThreadPool(8);
+        // Create new thread pool with 6 threads
+        ExecutorService threadPool = Executors.newFixedThreadPool(6);
 
         // Create the delay queue and assign one thread to it
         PendingQueue pendingQueue = PendingQueue.getInstance();
@@ -25,7 +23,13 @@ public class AppointmentService {
         // Set the collection on which you want to operate on
         databaseClient.setCollection("timeslots");
 
-        // Creates an instance of the appointment handler and binds it to the callback
-        brokerClient.setCallback(new AppointmentHandler(threadPool));
+        // Create ShutdownManager
+        ShutdownManager shutdownManager = new ShutdownManager(threadPool);
+
+        while (!ShutdownManager.shutdownRequested) {
+            // Creates an instance of the appointment handler and binds it to the callback
+            brokerClient.setCallback(new AppointmentCallback(threadPool));
+        }
+        shutdownManager.shutdown();
     }
 }

@@ -94,12 +94,15 @@ public class BrokerClient {
 
     /** Internal method for connecting to the correct subjects **/
     public void setSubscriptions(){
-        this.subscribe(Topic.SUBSCRIBE_PENDING.getStringValue(),0);
-        this.subscribe(Topic.SUBSCRIBE_CANCEL.getStringValue(),0);
-        this.subscribe(Topic.SUBSCRIBE_CANCEL_USER.getStringValue(),0);
-        this.subscribe(Topic.SUBSCRIBE_CANCEL_DENTIST.getStringValue(),0);
-        this.subscribe(Topic.SUBSCRIBE_CONFIRM.getStringValue(), 0);
-        this.subscribe(Topic.SUBSCRIBE_AVAILABLE.getStringValue(), 0);
+        this.subscribe(Topic.SUBSCRIBE_PENDING.getStringValue(),1);
+        this.subscribe(Topic.SUBSCRIBE_CANCEL.getStringValue(),1);
+        this.subscribe(Topic.SUBSCRIBE_CANCEL_USER.getStringValue(),1);
+        this.subscribe(Topic.SUBSCRIBE_CANCEL_DENTIST.getStringValue(),1);
+        this.subscribe(Topic.SUBSCRIBE_CONFIRM.getStringValue(), 1);
+        this.subscribe(Topic.SUBSCRIBE_AVAILABLE.getStringValue(), 1);
+        this.subscribe(Topic.SHUTDOWN.getStringValue(), 0);
+        this.subscribe(Topic.RESTART.getStringValue(), 0);
+        this.subscribe(Topic.PING.getStringValue(), 0);
     }
 
     // Disconnect method
@@ -107,7 +110,6 @@ public class BrokerClient {
         try {
             if(instance != null) {
                 this.client.disconnect();
-                System.out.println("Disconnected");
                 instance = null;
             }
         } catch(MqttException me) {

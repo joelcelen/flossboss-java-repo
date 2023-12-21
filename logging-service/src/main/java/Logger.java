@@ -9,12 +9,12 @@ public class Logger implements MqttCallback {
     private final DatabaseClient CLIENT = DatabaseClient.getInstance();
     private final BrokerClient BROKER = BrokerClient.getInstance();
     private ExecutorService threadPool = Executors.newFixedThreadPool(8);
-
+    private ExecutorService healthThread;
     private FileHandler appointmentReqHandler = new FileHandler("flossboss/appointment/request");
     private FileHandler appointmentUpdateHandler = new FileHandler("flossboss/appointment/update");
     private FileHandler dentistHandler = new FileHandler("flossboss/dentist");
     private FileHandler timeSlotHandler = new FileHandler("flossboss/timeslots/clinic");
-
+    private HealthHandler healthHandler;
     private DatabaseHandler appointmentReqDbHandler = new DatabaseHandler(CLIENT);
     private DatabaseHandler appointmentUpdateDbHandler = new DatabaseHandler(CLIENT);
     private DatabaseHandler dentistDbHandler = new DatabaseHandler(CLIENT);
@@ -29,6 +29,12 @@ public class Logger implements MqttCallback {
         this.threadPool.submit(appointmentUpdateDbHandler);
         this.threadPool.submit(dentistDbHandler);
         this.threadPool.submit(timeslotDbHandler);
+        this.healthThread = Executors.newSingleThreadExecutor(runnable -> {
+            Thread thread = new Thread(runnable);
+            thread.setDaemon(true);
+            return thread;
+        });
+        this.healthHandler = new HealthHandler();
     }
     @Override
     public void connectionLost(Throwable throwable) {
@@ -53,6 +59,8 @@ public class Logger implements MqttCallback {
             System.out.println("message received");
             timeSlotHandler.appendToString(topic, mqttMessage);
             timeslotDbHandler.incrementMessageCount(topic);
+        } else if (topic.equals("flossboss/ping/logging")) {
+            healthThread.submit(healthHandler::echo);
         }
     }
     @Override
