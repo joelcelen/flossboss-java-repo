@@ -18,5 +18,8 @@ WORKDIR /app
 # Copy only the built JAR file from the Maven build stage
 COPY --from=builder /app/target/notification-service-1.0-SNAPSHOT.jar /app/notification-service-1.0-SNAPSHOT.jar
 
+# Copy the .env file into the image
+COPY .env /app/.env
+
 # Specify the command to run the appointment-service application
 CMD ["java", "-jar", "/app/notification-service-1.0-SNAPSHOT.jar"]

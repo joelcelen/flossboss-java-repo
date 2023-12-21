@@ -1,24 +1,19 @@
-package org.flossboss.notificationservice;
-
 import org.bson.Document;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 public class DatabaseTest {
 
-    private DatabaseClient dbClient;
+    private TestingDao dbClient;
     private String itemID;
 
     /** Creates a client and a test-item before each test **/
     @Before
     public void before(){
-        this.dbClient = new DatabaseClient("mongodb+srv://flossboss-test:vaSEAvtHSumlixAv@test-cluster.wlvtb6y.mongodb.net/?retryWrites=true&w=majority");
-        this.dbClient.connect("services-db");
-        this.dbClient.setCollection("services");
+        this.dbClient = TestingDao.getInstance();
         Document item = new Document()
                 .append("service_name", "NotificationService_Test")
                 .append("version", 1)
@@ -38,7 +33,8 @@ public class DatabaseTest {
     /** Reads an item and asserts that the JSON retrieved matches the correct item queried for **/
     @Test
     public void readItem(){
-        String result = dbClient.readItem(this.itemID);
+        Document query = dbClient.readItem(this.itemID);
+        String result = query.toJson();
         String expected = String.format("{\"_id\": {\"$oid\": \"%s\"}, \"service_name\": \"NotificationService_Test\", \"version\": 1, \"status\": \"testing\", \"available\": false}", this.itemID);
         assertEquals(expected, result);
     }
@@ -47,7 +43,8 @@ public class DatabaseTest {
     @Test
     public void updateItem(){
         dbClient.updateItem(this.itemID, "service_name", "NotificationService_Updated");
-        String result = dbClient.readItem(this.itemID);
+        Document query = dbClient.readItem(this.itemID);
+        String result = query.toJson();
         String expected = String.format("{\"_id\": {\"$oid\": \"%s\"}, \"service_name\": \"NotificationService_Updated\", \"version\": 1, \"status\": \"testing\", \"available\": false}", this.itemID);
         assertEquals(expected, result);
 
