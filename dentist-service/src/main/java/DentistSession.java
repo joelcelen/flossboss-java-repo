@@ -146,14 +146,6 @@ public class DentistSession {
 
     /** Set collection to appointments and retrieve all appointment items from DB for e specific dentist, return JSONArray of appointments */
     private JSONArray getAppointments(DatabaseClient databaseClient, BrokerClient brokerClient) {
-        //TODO
-        // Ensure past appointments are not retrieved
-        // publish to "timeslots/cleanup"
-        /*
-        // Delete past appointments to ensure they are not retrieved
-        final String DELETE_PAST_APPOINTMENTS = "timeslots/cleanup";
-        brokerClient.publish(DELETE_PAST_APPOINTMENTS, "OK", 1);
-         */
         databaseClient.setCollection(APPOINTMENT_COLLECTION);
         return databaseClient.getAppointmentsForDentist(dentistId);
     }
