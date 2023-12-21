@@ -1,7 +1,8 @@
 import static com.mongodb.client.model.Filters.eq;
-
 import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertOneResult;
@@ -54,40 +55,10 @@ public class DatabaseClient {
     /** Creates a new entry in your database collection **/
     public void createItem(Document item) {
         InsertOneResult result = collection.insertOne(item);
-
         if (result.wasAcknowledged()) {
             System.out.println("Item inserted successfully!");
         } else {
             System.out.println("Failed to insert item.");
-        }
-    }
-
-    /** Reads an item based on the item's ID and returns it as JSON**/
-    public String readItem(String id) {
-
-        String query;
-        if(existsItem(id)){
-            Document item = collection.find(eq("_id", new ObjectId(id))).first();
-            query = item.toJson();
-        }else{
-            query = "No item with specified ID found";
-        }
-
-        return query;
-    }
-
-    /** Updates a single row of an item to your specified value **/
-    public void updateItem(String id, String attribute, String newValue){
-
-        if(this.existsItem(id)){
-            UpdateResult result = collection.updateOne(Filters.eq("_id", new ObjectId(id)), Updates.set(attribute,newValue));
-            if(result.wasAcknowledged()){
-                System.out.println("Item successfully updated!");
-            }else{
-                System.out.println("Item was not updated.");
-            }
-        }else{
-            System.out.println("Item not found.");
         }
     }
 
@@ -107,10 +78,7 @@ public class DatabaseClient {
 
     /** Find item in DB based on ID, if item found it returns ture, else it returns false **/
     public boolean existsItem(String id) {
-
-        FindIterable<Document> result = collection.find(eq("_id", new ObjectId(id))
-        );
-
+        FindIterable<Document> result = collection.find(eq("_id", new ObjectId(id)));
         // Check if any documents match the query
         return result.iterator().hasNext();
     }
@@ -118,6 +86,12 @@ public class DatabaseClient {
     /** Find item in DB based on email */
     public Document findItemByEmail(String email) {
         return collection.find(eq("email",email)).first();
+    }
+
+    /** Ensure dentist email is unique */
+    public void ensureUniqueEmail() {
+        collection = database.getCollection("dentists");
+        collection.createIndex(Indexes.ascending("email"), new IndexOptions().unique(true));
     }
 
     /** Gets the auto generated ID based on email **/
@@ -129,7 +103,6 @@ public class DatabaseClient {
         } else {
             id = "No matching item was found.";
         }
-
         return id;
     }
 
@@ -140,7 +113,6 @@ public class DatabaseClient {
                 Filters.eq("_id", new ObjectId(clinicId)),
                 Updates.push("dentists", dentistId)
         );
-
         // Check if the update was successful
         if (result.wasAcknowledged() && result.getMatchedCount() > 0) {
             System.out.println("Dentist added to clinic successfully.");
@@ -166,11 +138,25 @@ public class DatabaseClient {
         return appointments;
     }
 
+    /** Find item in DB based on id (Used in tests only) */
+    public Document testFindItemById(String id) {
+        return collection.find(eq("_id", new ObjectId(id))).first();
+    }
+    /** Gets the auto generated ID based on email (Used in tests only) **/
+    public String testGetId(String name){
+        String id;
+        Document query = collection.find(eq("name", name)).first();
+        if (query != null){
+            id = query.get("_id").toString();
+        } else {
+            id = "No matching item was found.";
+        }
+        return id;
+    }
+
     /** Helper method to load in the environmentals from the .txt file **/
     private void loadURI() {
-
         String path = "atlasconfig.txt";
-
         try (
                 InputStream inputStream = BrokerClient.class.getClassLoader().getResourceAsStream(path)) {
             if (inputStream == null) {
@@ -178,7 +164,6 @@ public class DatabaseClient {
             }
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
             String[] configLines = reader.lines().collect(Collectors.joining("\n")).split("\n");
-
             // These need to be in the correct order in the txt file.
             this.uri = configLines[0].trim();
         } catch (IOException e) {
