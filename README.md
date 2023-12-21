@@ -32,10 +32,33 @@ The diagram below provides a visual representation of the development view for t
 
 ## Installation guide
 #### Prerequisites
-* Java 17 [Download here](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
+* Java 17 [Link to download](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
+* Maven [Link to download](https://maven.apache.org/download.cgi)
+* Docker Desktop [Link to download](https://www.docker.com/products/docker-desktop/)
+* MongoDB Cloud database [Link to MongoDB](https://account.mongodb.com/account/login?signedOut=true)
+* HiveMQ Cloud MQTT Broker [Link to HiveMQ](https://auth.hivemq.cloud/login?state=hKFo2SByblBzUXBWYVZhdkNSYlhPQ3NHUi1BMFNHcFRpVnFZRqFupWxvZ2luo3RpZNkgd0U1VUNSTlZFM1ZFNHZ0SW9jWWhqS2lodHJNSmYta0qjY2lk2SBJYWpvNGUzMmp4d1VzOEFkRnhneFFuMlZQM1l3SVpUSw&client=Iajo4e32jxwUs8AdFxgxQn2VP3YwIZTK&protocol=oauth2&audience=hivemq-cloud-api&redirect_uri=https%3A%2F%2Fconsole.hivemq.cloud&scope=openid%20profile%20email&response_type=code&response_mode=query&nonce=UjJhUnZOUlJnd3RmbjZmNFBGWX5uc2w3bHZERW5tRmVHMHl6MDFjXzVMbQ%3D%3D&code_challenge=cOpID4Iew7D-HcwtkQjs-7GYcfrwzD7JV9QTPQNOJgU&code_challenge_method=S256&auth0Client=eyJuYW1lIjoiYXV0aDAtc3BhLWpzIiwidmVyc2lvbiI6IjEuMjIuNiJ9)
+#### Step 1: Edit configuration files
+> * Open each service in an IDE that supports Java (we recommend IntelliJ or Visual Studio Code). 
+>
+> * Add a text file named **"atlasconfig.txt"** to flossboss-java-repo\\**{"service"}**\src\main\resources. Add the MongoDB database URI to the text file.
+> * Add a text file named **"hiveconfig.txt"** to flossboss-java-repo\\**{"service"}**\src\main\resources. In the text file you will need to add **4 lines:**
+>> **Line 1:** Preffered MQTT **client name**  
+>> **Line 2:** **URL** for your HiveMQ cluster  
+>> **Line 3:** HiveMQ **email**  
+>> **Line 4:** HiveMQ **password**  
+>
+
+#### Step 2: Run the Services through Docker Desktop
 
 
 
 ## Authors and Acknowledgments
+- Isaac Lindegren Ternbom  
+- Joel Celén  
+- Karl Eriksson  
+- Ahmand Haj Ahmad  
+- Malte Bengtsson  
+- Rizwan Rafiq
+
 
 ## License
