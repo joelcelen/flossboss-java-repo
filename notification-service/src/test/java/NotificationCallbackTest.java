@@ -12,9 +12,8 @@ public class NotificationCallbackTest {
 
     private NotificationCallback callback;
     private ExecutorService mockThreadPool = mock(ExecutorService.class);
-
     private String validPayload = "{\"_id\": {\"$oid\": \"657859066c777d12b7ef2859\"}, \"_clinicId\": \"657844d2fb84354ce31a0a73\", \"_dentistId\": \"65784e70e2cb5c78d8256587\", \"_userId\": \"6582eff20370d16482ca06b5\", \"date\": {\"$date\": \"2023-12-15T00:00:00Z\"}, \"timeFrom\": \"08:00\", \"timeTo\": \"08:45\", \"isAvailable\": true, \"isPending\": false, \"isBooked\": true}";
-
+    private String subscriptionPayload = "{\"_id\": {\"$oid\": \"658808724d4ae76f7ccad9eb\"}, \"_clinicId\": \"657844d2fb84354ce31a0a77\", \"date\": {\"$date\": \"2024-01-01T00:00:00Z\"}, \"clinicName\": \"WeSmile Visby\", \"userEmails\": [\"some@test.mail\", \"another@test.mail\", \"test@test.mail\"], \"__v\": 0}";
     private String invalidPayload = "{\"error\": \"invalid operation\", \"_id\": \"657859066c777d12b7ef2859\"}";
 
     @Before
@@ -32,6 +31,9 @@ public class NotificationCallbackTest {
     public void isValidPayload() {
         boolean validJson = callback.isValidPayload(validPayload);
         assertTrue(validJson);
+
+        boolean validSubJson = callback.isValidPayload(subscriptionPayload);
+        assertTrue(validSubJson);
 
         boolean invalidJson = callback.isValidPayload(invalidPayload);
         assertFalse(invalidJson);
@@ -62,6 +64,15 @@ public class NotificationCallbackTest {
     public void userCancellationArrivedTest() {
         // Simulate an incoming message on the CANCEL_USER topic
         callback.messageArrived(Topic.CANCEL_USER.getStringValue(), new MqttMessage(validPayload.getBytes()));
+
+        // Verify that the thread pool submitted a task
+        verify(mockThreadPool, times(1)).submit(any(Runnable.class));
+    }
+
+    @Test
+    public void userSubscriptionTest() {
+        // Simulate an incoming message on the SUBSCRIPTION topic
+        callback.messageArrived(Topic.SUBSCRIPTION.getStringValue(), new MqttMessage(validPayload.getBytes()));
 
         // Verify that the thread pool submitted a task
         verify(mockThreadPool, times(1)).submit(any(Runnable.class));

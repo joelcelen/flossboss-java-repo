@@ -51,4 +51,17 @@ public class EmailFormatter {
                 Team FlossBoss
                 """.formatted(content.getUserName(), content.getClinicName(), content.getDate(), content.getTime(), content.getLocation());
     }
+
+    public String subscriptionUpdate(String clinicName){
+        return """
+                Hello,
+                
+                An appointment time at %s is now available.
+                
+                If there is no timeslot that suits your needs, please make sure to resubscribe to the date and clinic again.
+                
+                Have a wonderful day,
+                Team FlossBoss
+                """.formatted(clinicName);
+    }
 }

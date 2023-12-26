@@ -1,6 +1,11 @@
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.bson.Document;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class NotificationHandler {
 
@@ -8,12 +13,14 @@ public class NotificationHandler {
     private final ClinicDao clinicDao;
     private final EmailFormatter emailFormatter;
     private final EmailSender emailSender;
+    private final String from;
 
     public NotificationHandler(){
         this.clinicDao = ClinicDao.getInstance();
         this.userDao = UserDao.getInstance();
         this.emailFormatter = new EmailFormatter();
         this.emailSender = new EmailSender();
+        this.from = ConfigHandler.getVariable("GMAIL_USER");
     }
 
     /** Handles confirmation **/
@@ -30,7 +37,6 @@ public class NotificationHandler {
             // Formats the email content
             String subject = "Confirmation Dental Appointment";
             String body = emailFormatter.confirmation(contactInfo);
-            String from = ConfigHandler.getVariable("GMAIL_USER");
 
             // Sends the email
             emailSender.sendMessage(contactInfo.getUserEmail(), from, subject, body);
@@ -53,7 +59,6 @@ public class NotificationHandler {
 
             String subject = "Dentist Cancellation Appointment";
             String body = emailFormatter.dentistCancellation(contactInfo);
-            String from = ConfigHandler.getVariable("GMAIL_USER");
 
             // Sends the email
             emailSender.sendMessage(contactInfo.getUserEmail(), from, subject, body);
@@ -76,12 +81,30 @@ public class NotificationHandler {
 
             String subject = "Cancellation Dental Appointment";
             String body = emailFormatter.userCancellation(contactInfo);
-            String from = ConfigHandler.getVariable("GMAIL_USER");
 
             // Sends the email
             emailSender.sendMessage(contactInfo.getUserEmail(), from, subject, body);
 
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void subscriptionUpdate(String payload){
+        try{
+            String subject = "New appointment time available";
+
+            JsonObject subscription = JsonParser.parseString(payload).getAsJsonObject();
+            JsonArray emailArray = subscription.getAsJsonArray("userEmails");
+            String clinicName = subscription.get("clinicName").getAsString();
+
+            String body = emailFormatter.subscriptionUpdate(clinicName);
+
+            for (JsonElement email : emailArray){
+                emailSender.sendMessage(email.getAsString(), from, subject, body);
+            }
+
+        } catch (Exception e){
             e.printStackTrace();
         }
     }

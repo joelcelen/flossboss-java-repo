@@ -92,6 +92,7 @@ public class BrokerClient {
         this.subscribe(Topic.CANCEL_USER.getStringValue(),0);
         this.subscribe(Topic.CONFIRM.getStringValue(),0);
         this.subscribe(Topic.PING.getStringValue(),0);
+        this.subscribe(Topic.SUBSCRIPTION.getStringValue(),1);
     }
 
     // Disconnect method
