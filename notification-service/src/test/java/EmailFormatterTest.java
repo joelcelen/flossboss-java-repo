@@ -22,7 +22,7 @@ public class EmailFormatterTest {
     }
 
     @Test
-    public void confirmation() {
+    public void confirmationTest() {
         String result = emailFormatter.confirmation(emailContent);
 
         String expected = """
@@ -44,7 +44,7 @@ public class EmailFormatterTest {
     }
 
     @Test
-    public void userCancellation() {
+    public void userCancellationTest() {
         String result = emailFormatter.userCancellation(emailContent);
 
         String expected = """
@@ -64,7 +64,7 @@ public class EmailFormatterTest {
     }
 
     @Test
-    public void dentistCancellation() {
+    public void dentistCancellationTest() {
         String result = emailFormatter.dentistCancellation(emailContent);
 
         String expected = """
@@ -78,6 +78,23 @@ public class EmailFormatterTest {
                 Location: Test Street
                 
                 To help you reschedule, please contact your clinic as soon as possible or book a new time at the FlossBoss website.
+                
+                Have a wonderful day,
+                Team FlossBoss
+                """;
+        assertEquals(expected, result);
+    }
+
+    @Test
+    public void subscriptionUpdateTest() {
+        String result = emailFormatter.subscriptionUpdate("Test Clinic");
+
+        String expected = """
+                Hello,
+                
+                An appointment time at Test Clinic is now available.
+                
+                If there is no timeslot that suits your needs, please make sure to resubscribe to the date and clinic again.
                 
                 Have a wonderful day,
                 Team FlossBoss
