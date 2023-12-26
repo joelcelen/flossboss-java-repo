@@ -40,6 +40,10 @@ public class NotificationCallback implements MqttCallback {
             if (isValidPayload(payload)){
                 this.threadPool.submit(()-> handler.userCancellation(payload));
             }
+        } else if (topic.startsWith(Topic.SUBSCRIPTION.getStringValue())) {
+            if (isValidPayload(payload)){
+                this.threadPool.submit(()-> handler.subscriptionUpdate(payload));
+            }
         } else if (topic.equals(Topic.PING.getStringValue())) {
             // Create separate thread to handle pings
             Thread healthThread = new Thread(healthHandler::echo);
@@ -77,6 +81,11 @@ public class NotificationCallback implements MqttCallback {
                     && jsonPayload.has("isPending")
                     && jsonPayload.has("isBooked")) {
                 return true;
+            } else if(jsonPayload.has("_id")
+                    && jsonPayload.has("date")
+                    && jsonPayload.has("clinicName")
+                    && jsonPayload.has("userEmails")) {
+                return true;
             } else {
                 System.out.println("Invalid Payload");
                 return false;
@@ -92,4 +101,6 @@ public class NotificationCallback implements MqttCallback {
         brokerClient.reconnect();
         brokerClient.setCallback(this);
     }
+
+    /**{"_id": {"$oid": "658808724d4ae76f7ccad9eb"}, "_clinicId": "657844d2fb84354ce31a0a77", "date": {"$date": "2024-01-01T00:00:00Z"}, "clinicName": "WeSmile Visby", "userEmails": ["joel_celen@hotmail.com", "celen.joel@gmail.com", "j.celen@protonmail.com"], "__v": 0} **/
 }

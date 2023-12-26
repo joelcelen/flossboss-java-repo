@@ -4,6 +4,7 @@ public enum Topic {
     CONFIRM("flossboss/appointment/update/confirm"),
     CANCEL_USER("flossboss/appointment/update/canceluser"),
     CANCEL_DENTIST("flossboss/appointment/update/canceldentist"),
+    SUBSCRIPTION("flossboss/subscription/update"),
     PING("flossboss/ping/notification"),
     ECHO("flossboss/echo/notification");
 

@@ -1,6 +1,11 @@
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.bson.Document;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class NotificationHandler {
 
@@ -82,6 +87,19 @@ public class NotificationHandler {
             emailSender.sendMessage(contactInfo.getUserEmail(), from, subject, body);
 
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void subscriptionUpdate(String payload){
+        try{
+            JsonObject subscription = JsonParser.parseString(payload).getAsJsonObject();
+            JsonArray emailArray = subscription.getAsJsonArray("userEmails");
+            for (JsonElement email : emailArray){
+                System.out.println(email.getAsString());
+            }
+
+        } catch (Exception e){
             e.printStackTrace();
         }
     }
