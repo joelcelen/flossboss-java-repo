@@ -42,6 +42,19 @@ public class TestingDao extends DatabaseClient {
         }
     }
 
+    @Override
+    public Document readItem(String id) {
+
+        Document query;
+        if (existsItem(id)) {
+            query = super.getCollection().find(eq("_id", new ObjectId(id))).first();
+        } else {
+            query = null;
+        }
+
+        return query;
+    }
+
     /** Updates a single row of an item to your specified value **/
     public void updateItem(String id, String attribute, String newValue) {
 
@@ -54,20 +67,6 @@ public class TestingDao extends DatabaseClient {
             }
         } else {
             System.out.println("Item not found.");
-        }
-    }
-
-    /** Deletes item from specified collection based on item ID **/
-    public void deleteItem(String id) {
-        if (this.existsItem(id)) {
-            DeleteResult result = super.getCollection().deleteOne(eq("_id", new ObjectId(id)));
-            if (result.wasAcknowledged()) {
-                System.out.println("Item successfully deleted!");
-            } else {
-                System.out.println("Item was no deleted.");
-            }
-        } else {
-            System.out.println("No matching document found.");
         }
     }
 

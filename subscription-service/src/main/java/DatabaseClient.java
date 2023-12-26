@@ -1,4 +1,5 @@
 import com.mongodb.client.*;
+import com.mongodb.client.result.DeleteResult;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import static com.mongodb.client.model.Filters.eq;
@@ -36,6 +37,20 @@ public abstract class DatabaseClient {
         }
 
         return query;
+    }
+
+    /** Deletes item from specified collection based on item ID **/
+    public void deleteItem(String id) {
+        if (this.existsItem(id)) {
+            DeleteResult result = collection.deleteOne(eq("_id", new ObjectId(id)));
+            if (result.wasAcknowledged()) {
+                System.out.println("Item successfully deleted!");
+            } else {
+                System.out.println("Item was no deleted.");
+            }
+        } else {
+            System.out.println("No matching document found.");
+        }
     }
 
     /** Makes sure the entry exists in the database **/
