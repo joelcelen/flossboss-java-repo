@@ -1,0 +1,66 @@
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
+
+variables:
+  MAVEN_OPTS: -Dmaven.repo.local=.m2/repository
+  ATLAS_TEST_URI: "$ATLAS_TEST_URI"
+  ATLAS_URI: "$ATLAS_URI"
+  HIVE_CLIENT_NAME: "$HIVE_CLIENT_NAME"
+  HIVE_URL: "$HIVE_URL"
+  HIVE_USER: "$HIVE_USER"
+  HIVE_PW: "$HIVE_PW"
+
+before_script:
+  - "cd subscription-service && touch .env && cd .."
+
+
+image: maven:latest
+
+stages:
+    - clean
+    - build
+    - test
+    - package
+
+cache:
+  paths:
+    - .m2/repository
+    - target
+
+clean_job:
+  stage: clean
+  tags:
+    - docker
+
+  script:
+    - echo "Maven clean started"
+    - "cd subscription-service && mvn clean"
+
+build_job:
+  stage: build
+  tags:
+    - docker 
+
+  script: 
+    - echo "Maven compile started"
+    - "cd subscription-service && mvn compile"
+
+
+test_job:
+  stage: test
+  tags:
+    - docker 
+
+  script: 
+    - echo "Maven test started"
+    - "cd subscription-service && mvn test"
+
+package_job:
+  stage: package
+  tags:
+    - docker 
+
+  script: 
+    - echo "Maven packaging started"
+    - "cd subscription-service && mvn package"

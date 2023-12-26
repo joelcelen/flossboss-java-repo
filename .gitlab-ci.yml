@@ -25,3 +25,7 @@ trigger_timeslot:
   stage: triggers
   trigger:
     include: timeslot-service/.gitlab-ci.yml
+trigger_subscription:
+  stage: triggers
+  trigger:
+    include: subscription-service/.gitlab-ci.yml
