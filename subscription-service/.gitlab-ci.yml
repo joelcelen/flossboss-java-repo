@@ -12,7 +12,7 @@ variables:
   HIVE_PW: "$HIVE_PW"
 
 before_script:
-  - "cd notification-service && touch .env && cd .."
+  - "cd subscription-service && touch .env && cd .."
 
 
 image: maven:latest
