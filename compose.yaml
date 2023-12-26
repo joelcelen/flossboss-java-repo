@@ -1,0 +1,19 @@
+services:
+
+  appointment-service:
+    image: flossboss/appointment-service:latest
+
+  notification-service:
+    image: flossboss/notification-service:latest
+
+  logging-service:
+    image: flossboss/logging-service:latest
+
+  dentist-service:
+    image: flossboss/dentist-service:latest
+
+  subscription-service:
+    image: flossboss/subscription-service:latest
+
+  timeslot-service:
+    image: flossboss/timeslot-service:latest
