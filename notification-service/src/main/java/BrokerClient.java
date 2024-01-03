@@ -88,10 +88,7 @@ public class BrokerClient {
 
     /** Internal method for connecting to the correct subjects **/
     public void setSubscriptions(){
-        this.subscribe(Topic.CANCEL_DENTIST.getStringValue(),0);
-        this.subscribe(Topic.CANCEL_USER.getStringValue(),0);
-        this.subscribe(Topic.CONFIRM.getStringValue(),0);
-        this.subscribe(Topic.PING.getStringValue(),0);
+        this.subscribe(Topic.APPOINTMENT_UPDATE.getStringValue(), 0);
         this.subscribe(Topic.SUBSCRIPTION.getStringValue(),1);
     }
 

@@ -1,6 +1,7 @@
 public enum Topic {
 
     /** Topics defined in the project **/
+    APPOINTMENT_UPDATE("flossboss/appointment/update/#"),
     CONFIRM("flossboss/appointment/update/confirm"),
     CANCEL_USER("flossboss/appointment/update/canceluser"),
     CANCEL_DENTIST("flossboss/appointment/update/canceldentist"),
