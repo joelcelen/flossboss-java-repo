@@ -17,6 +17,7 @@ stages:
     - build
     - test
     - package
+    - deploy
 
 cache:
   paths:
@@ -59,3 +60,15 @@ package_job:
   script: 
     - echo "Maven packaging started"
     - "cd appointment-service && mvn package"
+
+
+deploy_job:
+  stage: deploy
+  tags:
+    - docker
+
+  script:
+    - echo "Deployment initiated"
+
+  rules:
+    - if: '$TRIGGER_SOURCE == "merge_request_event"'
