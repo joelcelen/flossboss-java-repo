@@ -1,31 +1,65 @@
-workflow:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_PIPELINE_SOURCE == "push"
-    - if: $CI_PIPELINE_SOURCE == "web"
+variables:
+  TRIGGER_SOURCE: $CI_PIPELINE_SOURCE
+
 stages:
   - triggers
+
 trigger_appointment:
   stage: triggers
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - changes:
+      - "appointment-service/**/*"
   trigger:
     include: appointment-service/.gitlab-ci.yml
-trigger_logging:
-  stage: triggers
-  trigger:
-    include: logging-service/.gitlab-ci.yml
-trigger_notification:
-  stage: triggers
-  trigger:
-    include: notification-service/.gitlab-ci.yml
-trigger_dentist:
-  stage: triggers
-  trigger:
-    include: dentist-service/.gitlab-ci.yml
+
 trigger_timeslot:
   stage: triggers
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - changes:
+      - "timeslot-service/**/*"
   trigger:
     include: timeslot-service/.gitlab-ci.yml
+
+trigger_notification:
+  stage: triggers
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - changes:
+      - "notification-service/**/*"
+  trigger:
+    include: notification-service/.gitlab-ci.yml
+
+trigger_logging:
+  stage: triggers
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - changes:
+      - "logging-service/**/*"
+  trigger:
+    include: logging-service/.gitlab-ci.yml
+
+trigger_dentist:
+  stage: triggers
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - changes:
+      - "dentist-service/**/*"
+  trigger:
+    include: dentist-service/.gitlab-ci.yml
+
 trigger_subscription:
   stage: triggers
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - changes:
+      - "subscription-service/**/*"
   trigger:
     include: subscription-service/.gitlab-ci.yml
