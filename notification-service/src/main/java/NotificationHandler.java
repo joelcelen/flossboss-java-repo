@@ -4,9 +4,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.bson.Document;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class NotificationHandler {
 
     private final UserDao userDao;
@@ -39,7 +36,14 @@ public class NotificationHandler {
             String body = emailFormatter.confirmation(contactInfo);
 
             // Sends the email
-            emailSender.sendMessage(contactInfo.getUserEmail(), from, subject, body);
+            boolean sent = emailSender.sendMessage(contactInfo.getUserEmail(), from, subject, body);
+
+            if(sent){
+                String message = String.format("Email sent to %s", contactInfo.getUserEmail());
+                System.out.println(message);
+            } else {
+                System.out.println("No email was sent");
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -61,7 +65,14 @@ public class NotificationHandler {
             String body = emailFormatter.dentistCancellation(contactInfo);
 
             // Sends the email
-            emailSender.sendMessage(contactInfo.getUserEmail(), from, subject, body);
+            boolean sent = emailSender.sendMessage(contactInfo.getUserEmail(), from, subject, body);
+
+            if(sent){
+                String message = String.format("Email sent to %s", contactInfo.getUserEmail());
+                System.out.println(message);
+            } else {
+                System.out.println("No email was sent");
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -83,7 +94,14 @@ public class NotificationHandler {
             String body = emailFormatter.userCancellation(contactInfo);
 
             // Sends the email
-            emailSender.sendMessage(contactInfo.getUserEmail(), from, subject, body);
+            boolean sent = emailSender.sendMessage(contactInfo.getUserEmail(), from, subject, body);
+
+            if(sent){
+                String message = String.format("Email sent to %s", contactInfo.getUserEmail());
+                System.out.println(message);
+            } else {
+                System.out.println("No email was sent");
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -101,7 +119,13 @@ public class NotificationHandler {
             String body = emailFormatter.subscriptionUpdate(clinicName);
 
             for (JsonElement email : emailArray){
-                emailSender.sendMessage(email.getAsString(), from, subject, body);
+                boolean sent = emailSender.sendMessage(email.getAsString(), from, subject, body);
+                if(sent){
+                    String message = String.format("Email sent to %s", email.getAsString());
+                    System.out.println(message);
+                } else {
+                    System.out.println("No email was sent");
+                }
             }
 
         } catch (Exception e){

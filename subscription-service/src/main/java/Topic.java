@@ -2,6 +2,7 @@ public enum Topic {
 
     /** Topics defined in the project **/
     SUBSCRIPTION_UPDATE("flossboss/subscription/update"),
+    APPOINTMENT_UPDATE("flossboss/appointment/update/#"),
     AVAILABLE("flossboss/appointment/update/available"),
     CANCEL_USER("flossboss/appointment/update/canceluser"),
     PING("flossboss/ping/subscription"),

@@ -112,6 +112,7 @@ public class AppointmentHandler{
             // Locks this conditional block to limit it to one thread accessing the same appointment at a time
             synchronized (this) {
                 if (databaseClient.isBooked(id) && matchingUser) {
+                    String payloadResponse = databaseClient.readItem(id).toJson();
 
                     // Update appointment to canceled state
                     databaseClient.updateString(id, "_userId", "none");
@@ -119,7 +120,6 @@ public class AppointmentHandler{
                     databaseClient.updateBoolean(id, "isBooked", false);
 
                     // Print operation in console and publish the JSON back
-                    String payloadResponse = databaseClient.readItem(id).toJson();
                     String payloadMessage = String.format("Appointment with id: %s canceled by user", id);
                     System.out.println(payloadMessage);
                     brokerClient.publish(Topic.PUBLISH_UPDATE_CANCEL_USER.getStringValue() + "/" + userId, payloadResponse, 1);
