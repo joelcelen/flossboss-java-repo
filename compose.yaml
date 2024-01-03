@@ -17,3 +17,9 @@ services:
 
   timeslot-service:
     image: flossboss/timeslot-service:latest
+
+  nodejs-server:
+    image: flossboss/nodejs-server:latest
+
+  # react-client:
+    # image: flossboss/react-client:latest
