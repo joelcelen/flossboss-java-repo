@@ -1,0 +1,19 @@
+services:
+
+  appointment-service:
+    image: flossboss/appointment-service:amd64
+
+  notification-service:
+    image: flossboss/notification-service:amd64
+
+  logging-service:
+    image: flossboss/logging-service:amd64
+
+  dentist-service:
+    image: flossboss/dentist-service:amd64
+
+  subscription-service:
+    image: flossboss/subscription-service:amd64
+
+  timeslot-service:
+    image: flossboss/timeslot-service:amd64
