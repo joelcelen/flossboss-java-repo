@@ -30,6 +30,24 @@ The diagram below provides a visual representation of the development view for t
 
 **Messaging Protocols:** MQTT (HiveMQ Cloud)
 
+## Run with Docker
+
+All the services and the client/server are uploaded to the projects [Dockerhub page](https://hub.docker.com/u/flossboss).
+
+To run docker images on your system you need to first install the [docker engine](https://www.docker.com/) on your local system. We recommend installing the desktop version to easily keep track of your current containers and CPU usage.
+
+Due to a current issue with the docker engine, Arm64 and Amd64 systems are not compatible with images built on the opposing architecture. To solve this problem we have images for both Arm64 and Amd64, choose the one that matches you system architecture.
+
+#### Run on Arm64 architecture
+1. Navigate to the repository root folder.
+2. To start services run "docker compose -f compose.arm.yaml up -d"
+3. To exit services run "docker compose -f compose.arm.yaml down"
+
+#### Run on Amd64 architecture
+1. Navigate to the repository root folder.
+2. To start services run "docker compose -f compose.amd.yaml up -d"
+3. To exit services run "docker compose -f compose.amd.yaml down"
+
 ## Installation guide
 #### Prerequisites
 * Java 17 [Link to download](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
@@ -48,8 +66,12 @@ The diagram below provides a visual representation of the development view for t
 >> **Line 4:** HiveMQ **password**  
 >
 
-#### Step 2: Run the Services through Docker Desktop
-
+#### Step 2: Build with Maven
+1. Navigate to the specified services root folder.
+2. Run "mvn clean install".
+3. Run "mvn clean package".
+4. Navigate to the subfolder "target".
+5. Run "java -jar your-jarfile-name.jar"
 
 
 ## Authors and Acknowledgments
