@@ -480,8 +480,6 @@ public class DentistUI {
             clientMqtt.subscribe(REGISTER_CONFIRMATION_TOPIC, 1);
             clientMqtt.subscribe(LOGIN_CONFIRMATION_TOPIC, 1);
             clientMqtt.subscribe(GET_APPOINTMENTS_TOPIC, 1);
-            //clientMqtt.subscribe(CONFIRM_APPOINTMENT, 1);
-            //clientMqtt.subscribe(CANCEL_APPOINTMENT, 1);
             clientMqtt.subscribe(APPOINTMENT_UPDATE_TOPIC, 0);
             clientMqtt.setCallback(new MqttCallback() {
                 @Override
