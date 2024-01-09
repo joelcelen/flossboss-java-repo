@@ -17,7 +17,7 @@ The FlossBoss system orchestrates a seamless dental appointment management exper
 
 The diagram below provides a visual representation of the development view for the entire system.
 ### Development view
-<img src="https://i.imgur.com/RaZndv5.png" />
+<img src="https://i.imgur.com/murcsPC.png" />
 
 ## Technologies and Tools used in this repository
 **Programmning Languages:** Java 17
