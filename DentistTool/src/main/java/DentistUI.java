@@ -377,7 +377,6 @@ public class DentistUI {
                 return; // Exit the loop once appointment is found and updated
             }
         }
-        System.out.println("Appointment not found");
     }
 
     /** Helper method used in changeAvailable()*/
@@ -439,13 +438,15 @@ public class DentistUI {
     }
 
     /** MQTT callback for registerConfirmationTopic */
-    private static void registerConfirmationCallback(MqttMessage message) {
+    private static void registerConfirmationCallback(MqttMessage message, ClientMqtt clientMqtt) throws MqttException{
         final String VALID_EMAIL = "validEmail";
         final String CLINIC_EXISTS = "clinicExists";
         JSONObject confirmation = new JSONObject(new String(message.getPayload()));
         if (confirmation.getBoolean(VALID_EMAIL) && confirmation.getBoolean(CLINIC_EXISTS)) {
             authenticated = true;
             System.out.println("\n\nRegistration Successful");
+            // Request appointments once logged in
+            requestAppointments(clientMqtt);
         } else if (!confirmation.getBoolean(VALID_EMAIL) && confirmation.getBoolean(CLINIC_EXISTS)) {
             System.out.println("\n\nRegistration failed. An account with the provided email already exists");
         } else {
@@ -454,12 +455,14 @@ public class DentistUI {
     }
 
     /** MQTT callback for loginConfirmationTopic */
-    private static void loginConfirmationCallback(MqttMessage message) {
+    private static void loginConfirmationCallback(MqttMessage message, ClientMqtt clientMqtt) throws MqttException {
         JSONObject confirmation = new JSONObject(new String(message.getPayload()));
         if (confirmation.getBoolean("confirmed")) {
             authenticated = true;
             name = confirmation.getString("dentistName");   // Extract name from payload so that it is displayed in UI
             System.out.println("\n\nLogin Successful");
+            // Request appointments once logged in
+            requestAppointments(clientMqtt);
         } else {
             System.out.println("\n\nLogin Failed");
         }
@@ -472,21 +475,21 @@ public class DentistUI {
         final String GET_APPOINTMENTS_TOPIC = "flossboss/dentist/send/appointments/"+email;
         final String CONFIRM_APPOINTMENT = "flossboss/appointment/update/confirm";
         final String CANCEL_APPOINTMENT = "flossboss/appointment/update/canceluser";
+        final String APPOINTMENT_UPDATE_TOPIC = "flossboss/appointment/update/#";
         try {
             clientMqtt.subscribe(REGISTER_CONFIRMATION_TOPIC, 1);
             clientMqtt.subscribe(LOGIN_CONFIRMATION_TOPIC, 1);
             clientMqtt.subscribe(GET_APPOINTMENTS_TOPIC, 1);
-            clientMqtt.subscribe(CONFIRM_APPOINTMENT, 1);
-            clientMqtt.subscribe(CANCEL_APPOINTMENT, 1);
+            clientMqtt.subscribe(APPOINTMENT_UPDATE_TOPIC, 0);
             clientMqtt.setCallback(new MqttCallback() {
                 @Override
                 public void connectionLost(Throwable throwable) { System.out.println("Connection lost: " + throwable.getMessage());}
                 @Override
                 public void messageArrived(String topic, MqttMessage message) throws Exception {
                     if(topic.equals(REGISTER_CONFIRMATION_TOPIC)) {
-                        registerConfirmationCallback(message);
+                        registerConfirmationCallback(message, clientMqtt);
                     } else if (topic.equals(LOGIN_CONFIRMATION_TOPIC)) {
-                        loginConfirmationCallback(message);
+                        loginConfirmationCallback(message, clientMqtt);
                     } else if (topic.equals(GET_APPOINTMENTS_TOPIC) && authenticated) {
                         JSONArray jsonArray = new JSONArray(new String(message.getPayload()));
                         appointments = storeAppointments(jsonArray);
