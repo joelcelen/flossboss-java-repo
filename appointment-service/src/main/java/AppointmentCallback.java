@@ -2,7 +2,8 @@ import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class AppointmentCallback implements MqttCallback {
 
@@ -10,6 +11,7 @@ public class AppointmentCallback implements MqttCallback {
     private final AppointmentHandler appointmentHandler;
     private final BrokerClient brokerClient;
     private final HealthHandler healthHandler;
+    private final Lock lock = new ReentrantLock();
 
     public AppointmentCallback(ExecutorService threadPool){
         this.threadPool = threadPool;
@@ -27,22 +29,51 @@ public class AppointmentCallback implements MqttCallback {
     public void messageArrived(String topic, MqttMessage payload){
 
         if(topic.equals(Topic.SUBSCRIBE_PENDING.getStringValue())){ // pending requests
-            threadPool.submit(()-> appointmentHandler.handlePending(payload.toString()));
+            lock.lock();
+            try{
+                threadPool.submit(()-> appointmentHandler.handlePending(payload.toString()));
+            } finally {
+                lock.unlock();
+            }
 
         }else if (topic.equals(Topic.SUBSCRIBE_CANCEL.getStringValue())){ // cancel requests
-            threadPool.submit(()-> appointmentHandler.handleCancel(payload.toString()));
+            lock.lock();
+            try{
+                threadPool.submit(()-> appointmentHandler.handleCancel(payload.toString()));
+            } finally {
+                lock.unlock();
+            }
 
         }else if (topic.equals(Topic.SUBSCRIBE_CANCEL_USER.getStringValue())){ // cancel booked from user
-            threadPool.submit(()-> appointmentHandler.handleUserCancel(payload.toString()));
-
+            lock.lock();
+            try{
+                threadPool.submit(()-> appointmentHandler.handleUserCancel(payload.toString()));
+            } finally {
+                lock.unlock();
+            }
         }else if (topic.equals(Topic.SUBSCRIBE_CANCEL_DENTIST.getStringValue())){ // cancel booked from dentist
-            threadPool.submit(()-> appointmentHandler.handleDentistCancel(payload.toString()));
+            lock.lock();
+            try{
+                threadPool.submit(()-> appointmentHandler.handleDentistCancel(payload.toString()));
+            } finally {
+                lock.unlock();
+            }
 
         }else if (topic.equals(Topic.SUBSCRIBE_CONFIRM.getStringValue())) { // confirm requests
-            threadPool.submit(()-> appointmentHandler.handleConfirm(payload.toString()));
+            lock.lock();
+            try{
+                threadPool.submit(()-> appointmentHandler.handleConfirm(payload.toString()));
+            } finally {
+                lock.unlock();
+            }
 
         } else if (topic.equals(Topic.SUBSCRIBE_AVAILABLE.getStringValue())) { // availability requests
-            threadPool.submit(()->appointmentHandler.handleAvailable(payload.toString()));
+            lock.lock();
+            try{
+                threadPool.submit(()-> appointmentHandler.handleAvailable(payload.toString()));
+            } finally {
+                lock.unlock();
+            }
 
         } else if (topic.equals(Topic.RESTART.getStringValue())) { // reconnection request
             reconnect();
@@ -69,7 +100,7 @@ public class AppointmentCallback implements MqttCallback {
             }
         }
     }
-    
+
     /** Reconnection logic **/
     private void reconnect(){
         brokerClient.reconnect();
