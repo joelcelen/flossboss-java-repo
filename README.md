@@ -1,9 +1,10 @@
 # FlossBoss Java Repository
 
 ## Description
-The FlossBoss project is a web-based system for dental appointment management that combines a client/server model with a service-oriented approach to efficiently manage dental appointments. Employing a React-based Patient GUI on the front end and an Express.js server on the back end for user data handling through HTTP REST API. The system leverages MQTT as a communication protocol, where the server, instead of direct database operations for bookings, publishes booking requests and subscribes to booking confirmations, enabling real-time updates via SSE. The Service Layer encapsulates the booking logic, dentist authentication, email notifications, and logging, with services subscribing to and publishing on MQTT topics for a decoupled, event-driven workflow that provides real-time notifications, enhancing user experience and system maintainability.
+The FlossBoss project is a web-based system for dental appointment management that combines a client/server model with a service-oriented approach to efficiently manage dental appointments. Employing a React-based Patient GUI on the front end and an Express.js server on the back end for user data handling through HTTP REST API. The system leverages MQTT as a communication protocol, where the server, instead of direct database operations for bookings, publishes booking requests and subscribes to booking confirmations, enabling real-time updates via SSE. The Service Layer encapsulates the booking logic, dentist authentication, email notifications, and logging, with services subscribing to and publishing on MQTT topics for a decoupled, event-driven workflow that provides real-time notifications, enhancing user experience and system maintainability. 
 
-This repository contains the Java codebase for the entire system, including the service layer, dentist client, and admin tool. This setup covers everything from managing appointments and dentist authentication to administrative functions. By segregating these Java-based components from the client/server side, which is developed in JavaScript, the project achieves a clear separation of concerns. This approach not only streamlines development but also significantly simplifies the Continuous Integration and Continuous Delivery (CI/CD) processes, ensuring smoother deployments and easier maintenance of the system.
+This repository contains the Java codebase for the entire system, including the service layer, dentist client, and admin tool. This setup covers everything from managing appointments and dentist authentication to administrative functions. By segregating these Java-based components from the client/server side, which is developed in JavaScript, the project achieves a clear separation of concerns. This approach not only streamlines development but also significantly simplifies the Continuous Integration and Continuous Delivery (CI/CD) processes, ensuring smoother deployments and easier maintenance of the system.</br></br>
+[This repository](https://github.com/KalleErikssoon/Flossboss-client-server) contains the client-server codebase for the project. 
 
 ## Table of contents
 1. [System Overview](#system-overview)
@@ -75,11 +76,11 @@ Due to a current issue with the docker engine, Arm64 and Amd64 systems are not c
 
 
 ## Authors and Acknowledgments
-- Isaac Lindegren Ternbom  
-- Joel Celén  
-- Karl Eriksson  
-- Ahmand Haj Ahmad  
-- Malte Bengtsson  
+- [Isaac Lindegren Ternbom](https://github.com/isaaclt)  
+- [Joel Celén](https://github.com/joelcelen)
+- [Karl Eriksson](https://github.com/KalleErikssoon)
+- [Ahmand Haj Ahmad](https://github.com/ahmadhajahmad)
+- [Malte Bengtsson](https://github.com/maltextrakt)  
 - Rizwan Rafiq
 
 
